@@ -2,7 +2,7 @@
 
 This repository contains helper playbooks to mirror Red Hat Openshift Container Platform operators and create a bundle that can be used in air-gapped or disconnected environments. The playbooks use scripts from two other Red Hat consultants to achieve this.   
 
-The main script from [Arvin Amirian](https://github.com/redhat-cop/openshift-disconnected-operators) is primarily used for the content mirroring passing in for each operatpr index being mirrored the list of operators. This results in pulling the latest operators for the operator index tag passed in and also only the latest operand images being pulled.   
+The main script from [Arvin Amirian](https://github.com/redhat-cop/openshift-disconnected-operators) is primarily used for the content mirroring, passing in for each operator index being mirrored, the list of operators. This results in pulling the latest operators for the operator index tag passed in and also only the latest operand images being pulled.   
 
 If you need all versions of operand images, you can either use the [role](https://github.com/cadjai/mirror-ocp4-contents-for-artifactory.git), which provides an automation of the steps described in the [official docs](https://docs.openshift.com/container-platform/4.7/operators/admin/olm-managing-custom-catalogs.html) or follow the steps documented in the documentation.   
 
@@ -19,7 +19,7 @@ The playbooks here only require ansible to run.
 
 ## Running the playbooks 
 ### Mirror operators from the Internet Connected Device
-1. Update the vars/registry.yml file to match your environment 
+1. Update the vars/registry.yml file to match your environment if necessary
 2. Create the vars/vault.yml using the vars/vault.yml.example as template and using `ansible-vault create vars/vault.yml` 
 3. Run the playbook using the following command   
    ```
