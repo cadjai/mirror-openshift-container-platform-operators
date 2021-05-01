@@ -1,0 +1,6 @@
+[submodule "openshift-disconnected-operators"]
+	path = openshift-disconnected-operators
+	url = https://github.com/redhat-cop/openshift-disconnected-operators.git
+[submodule "openshift-disconnected-operators-redhatgov"]
+	path = openshift-disconnected-operators-redhatgov
+	url = https://github.com/RedHatGov/openshift-disconnected-operators.git

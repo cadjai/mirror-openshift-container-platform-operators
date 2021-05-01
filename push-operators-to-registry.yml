@@ -1,0 +1,76 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- name: ' Konductor | Provision UPI Infra | push-operators-to-registry.yml' 
+  hosts: localhost 
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/registry.yml'
+  vars:
+    module: "push-operators-to-registry"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+
+  tasks:
+    - name: '{{ ansible_name_module }} | block | unpack bundle to controller if required'
+      when:
+        - unpack_bundle is defined
+        - unpack_bundle | bool
+      block:
+        - name: '{{ ansible_name_module }} | file:directory | Ensure the operator images staging directory exist'
+          file:
+            path: "{{ item }}"
+            state: directory
+            mode: 0755
+          loop:
+            - "{{ dir_bundle_staging }}"
+
+        - name: '{{ ansible_name_module }} | unarchive:xz | original operator bundle on registry '
+          unarchive:
+            src: "{{ bundle_file_location }}"
+            remote_src: yes
+            dest: "{{ dir_bundle_staging }}"
+            mode: 0755
+          register: op_unbundle_out
+
+    - name: '{{ ansible_name_module }} | command | generate authfile for registry'
+      no_log: true
+      command: >
+        podman login -u {{ registry_admin_username }} -p {{ registry_admin_password }} \
+           --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/regconfig.json \
+           {{ registry_host_fqdn }}
+      register: reg_authfile_created
+
+    - name: '{{ ansible_name_module }} | set_fact |  authfile for destination registry'
+      set_fact:
+        registry_auth_config: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/regconfig.json"
+
+    - name: Upload to registry using script from Alex Flom 
+      become: yes
+      script: >
+        openshift-disconnected-operators-redhatgov/container/upload.sh \
+          -a {{ registry_auth_config }} \
+          -d {{ registry_host_fqdn }}/{{ operator_local_repository }} \
+          -m {{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt
+      with_dict:
+        - "{{ operator_registries_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.mirror is defined and item.value.mirror | bool
+        - item.value.source is defined and item.value.source != ""
+      register: operators_uploaded
+
+    - name: Upload operator index to registry
+      become: yes
+      command: >
+        skopeo copy docker://localhost:5000/custom-{{ item.value.source.split('/')[2] }} \
+           docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ item.value.source.split('/')[1] }}/{{ item.value.source.split('/')[2] }} \
+           --tls-verify=false --all --authfile={{ registry_auth_config }}
+      with_dict:
+        - "{{ operator_registries_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.mirror is defined and item.value.mirror | bool
+        - item.value.source is defined and item.value.source != ""
+      register: operator_indices_uploaded
+
