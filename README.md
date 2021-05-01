@@ -1,6 +1,6 @@
 # mirror-openshift-container-platform-operators 
 
-This repository contains helper playbooks to mirror Red Hat Openshift Container Platform operators and create a bundle that can be used in air-gapped or disconnected environments. The playbooks use scripts from two other Red Hat consultants to achive this.   
+This repository contains helper playbooks to mirror Red Hat Openshift Container Platform operators and create a bundle that can be used in air-gapped or disconnected environments. The playbooks use scripts from two other Red Hat consultants to achieve this.   
 
 The main script from [Arvin Amirian](https://github.com/redhat-cop/openshift-disconnected-operators) is primarily used for the content mirroring passing in for each operatpr index being mirrored the list of operators. This results in pulling the latest operators for the operator index tag passed in and also only the latest operand images being pulled.   
 
