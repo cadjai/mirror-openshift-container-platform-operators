@@ -153,7 +153,7 @@
         - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
           copy:
             src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/olm-icsp.yaml" 
-            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-arvin.yaml"
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp.yaml"
             force: yes
           with_dict:
             - "{{ operator_registries_to_mirror }}"
@@ -165,7 +165,7 @@
         - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
           copy:
             src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/olm-icsp.yaml" 
-            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-artifactory.yaml"
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
             force: yes
           with_dict:
             - "{{ operator_registries_to_mirror }}"
@@ -177,7 +177,7 @@
         - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
           copy:
             src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt" 
-            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/mapping-arvin.txt"
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/mapping.txt"
             force: yes
           with_dict:
             - "{{ operator_registries_to_mirror }}"
@@ -188,7 +188,7 @@
 
         - name: '{{ ansible_name_module }} | replace | destination repository '
           replace:
-            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-artifactory.yaml"
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
             regexp: 'localhost:5000'
             replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
             backup: yes
@@ -201,7 +201,7 @@
 
         - name: '{{ ansible_name_module }} | replace | file name '
           replace:
-            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-artifactory.yaml"
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
             regexp: 'olm-image-content-source'
             replace: '{{ (item.value.source.split("/")[2]).split(":")[0] }}'
             backup: yes
