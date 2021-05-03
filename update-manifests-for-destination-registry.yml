@@ -1,0 +1,81 @@
+- name: ' Konductor | Provision UPI Infra | update-manifests-for-destination-registry.yml'
+  hosts: localhost
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/registry.yml'
+  vars:
+    module: "mirror-operators"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+
+  tasks:
+####################### Copy manifest files to location to be pushed 
+    - name: '{{ ansible_name_module }} | copy manifest files to source repo location'
+      when:
+        - stage_manifests is defined
+        - stage_manifests | bool 
+      block:
+        - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+          copy:
+            src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/olm-icsp.yaml" 
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp.yaml"
+            force: yes
+          with_dict:
+            - "{{ operator_registries_to_mirror }}"
+          when:
+            - item.key is defined and item.key != ""
+            - item.value.mirror is defined and item.value.mirror | bool
+            - item.value.source is defined and item.value.source != ""
+
+        - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+          copy:
+            src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/olm-icsp.yaml" 
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
+            force: yes
+          with_dict:
+            - "{{ operator_registries_to_mirror }}"
+          when:
+            - item.key is defined and item.key != ""
+            - item.value.mirror is defined and item.value.mirror | bool
+            - item.value.source is defined and item.value.source != ""
+
+        - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
+          copy:
+            src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt" 
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/mapping.txt"
+            force: yes
+          with_dict:
+            - "{{ operator_registries_to_mirror }}"
+          when:
+            - item.key is defined and item.key != ""
+            - item.value.mirror is defined and item.value.mirror | bool
+            - item.value.source is defined and item.value.source != ""
+
+        - name: '{{ ansible_name_module }} | replace | destination repository '
+          replace:
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
+            regexp: 'localhost:5000'
+            replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
+            backup: yes
+          with_dict:
+            - "{{ operator_registries_to_mirror }}"
+          when:
+            - item.key is defined and item.key != ""
+            - item.value.mirror is defined and item.value.mirror | bool
+            - item.value.source is defined and item.value.source != ""
+
+        - name: '{{ ansible_name_module }} | replace | file name '
+          replace:
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
+            regexp: 'olm-image-content-source'
+            replace: '{{ (item.value.source.split("/")[2]).split(":")[0] }}'
+            backup: yes
+          with_dict:
+            - "{{ operator_registries_to_mirror }}"
+          when:
+            - item.key is defined and item.key != ""
+            - item.value.mirror is defined and item.value.mirror | bool
+            - item.value.source is defined and item.value.source != ""
+

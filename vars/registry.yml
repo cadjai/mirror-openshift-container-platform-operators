@@ -51,6 +51,8 @@ dir_bundle_location: "/data/bundles/artifactory"
 bundle_file_name: 'operators-bundle.tar.xz'
 bundle_file_location: "/data/staging/operators-bundle.tar.xz"
 dir_bundle_staging: "/data/staging"
+bundle: 'true'
+unpack_bundle: 'true'
 
 #####################################################################################################
 # End of user configurable variables
