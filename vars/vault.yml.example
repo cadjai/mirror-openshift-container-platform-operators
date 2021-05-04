@@ -1,7 +1,8 @@
 ### use this template as sample to create your vault file by populating the following variables
+# Operator mirror variables. These are your service account or credentials to the Red Hat registry where operators are pulled from
+vault_default_operator_registry_username: ''
+vault_default_operator_registry_password: ''
+# Operator push variables. These are related to the the destination registry
 vault_registry_host_fqdn: ''
 vault_registry_admin_username: ''
 vault_registry_admin_password: ''
-vault_default_operator_registry_username: ''
-vault_default_operator_registry_password: ''
-
