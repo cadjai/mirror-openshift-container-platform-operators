@@ -19,7 +19,7 @@ The playbooks here only require ansible to run.
 
 ## Cloning the repository
 1. Use `git clone https://github.com/cadjai/mirror-openshift-container-platform-operators.git` to clone the repository
-2. USe `cd mirror-openshift-container-platform-operators && git submodule update --init --recursive` to initially all submodule
+2. USe `cd mirror-openshift-container-platform-operators && git submodule update --init --recursive` to initialize all submodules
  
 ## Running the playbooks 
 ### Mirror operators from the Internet Connected Device
