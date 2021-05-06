@@ -17,6 +17,10 @@ To help ready the file system of the pulled images from the above step (using th
 It is recommended to look at the source repositories for each of the main scripts for the requirements of that script.  
 The playbooks here only require ansible to run. 
 
+## Cloning the repository
+1. Use `git clone https://github.com/cadjai/mirror-openshift-container-platform-operators.git` to clone the repository
+2. USe `cd mirror-openshift-container-platform-operators && git submodule update --init --recursive` to initially all submodule
+ 
 ## Running the playbooks 
 ### Mirror operators from the Internet Connected Device
 1. Update the vars/registry.yml file to match your environment if necessary

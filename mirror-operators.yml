@@ -61,9 +61,9 @@
         force: yes
         mode: 0644
       with_items:
-        - known-bad-images
-        - image-content-source-template 
-        - catalog-source-template
+        - openshift-disconnected-operators/known-bad-images
+        - openshift-disconnected-operators/image-content-source-template 
+        - openshift-disconnected-operators/catalog-source-template
 
     - name: '{{ ansible_name_module }} | shell:echo | create a line separated list of the items to mirror 1 of 2'
       shell: echo {{ item.value.mirrored_operator_list }} > {{ dir_bundle_staging }}/{{ item.key }}
