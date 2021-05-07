@@ -1,9 +1,8 @@
 #!/usr/local/bin/ansible-playbook --inventory=inventory
 - name: ' Konductor | Provision UPI Infra | mirror-operators.yml' 
   hosts: localhost 
-  become: yes
   vars:
-    ansible_python_interpreter: /usr/bin/python3
+    ansible_python_interpreter: /usr/bin/python
   vars_files:
     - 'vars/vault.yml'
     - 'vars/registry.yml'
@@ -12,13 +11,71 @@
     ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
 
   tasks:
-    - name: '{{ ansible_name_module }} | podman:login | Login to quay container registry'
+    - name: '{{ ansible_name_module }} | file:directory | Ensure all directory exist'
+      #become: yes
+      command: >
+        podman rm -f {{ registry_container_name }}
+      register: registry_container_removed
+
+    - name: '{{ ansible_name_module }} | file:directory | Ensure all directory exist'
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ registry_container_dir }}"
+        - "{{ dir_bundle_location }}"
+        - "{{ dir_bundle_staging }}"
+        - "{{ dir_bundle_staging }}/run"
+
+    - name: '{{ ansible_name_module }} | Download, install and configure opm '
+      when:
+        - install_opm is defined
+        - install_opm | bool 
+      block:
+        - name: '{{ ansible_name_module }} | get_url | '
+          get_url:
+            url: "{{ opm_binary_download_url }}"
+            dest: "{{ opm_temp_dir }}"
+            mode: 0755
+            force: true
+            validate_certs: false
+          register: opm_downloaded
+
+        - name: '{{ ansible_name_module }} | unarchive | unpack opm archive'
+          become: yes
+          unarchive:
+            src: "{{ opm_temp_dir }}/{{ opm_binary_downloaded_artifact }}"
+            dest: "{{  opm_binary | dirname }}"
+            mode: 0755
+            remote_src: true
+            validate_certs: false
+          register: opm_archive_installed
+
+        - name: '{{ ansible_name_module }} | copy | copy opm binary to {{ dir_bundle_staging }}/run '
+          copy:
+            src: "{{ opm_binary }}"
+            dest: "{{ dir_bundle_staging }}/run/{{ opm_binary | basename }}"
+            force: yes
+            mode: '0755'
+          register: opm_archive_copied
+
+    - name: '{{ ansible_name_module }} | podman:login | Login to RH container registry'
       no_log: true
       command: >
          podman login -u {{ default_operator_registry_username }} \
          -p {{ default_operator_registry_password }} \
          --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
           {{ default_operator_registry }}
+      register: authfile_created
+
+    - name: '{{ ansible_name_module }} | podman:login | Login to quay container registry'
+      no_log: true
+      command: >
+         podman login -u {{ default_operand_registry_username }} \
+         -p {{ default_operand_registry_password }} \
+         --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
+          {{ default_operand_registry }}
       register: authfile_created
 
     - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'
@@ -35,6 +92,11 @@
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
         - item.value.image_registry is defined and item.value.image_registry != ""
+
+    - name: '{{ ansible_name_module }} | file |  set permission on authfile for registry'
+      file:
+        path: '{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json' 
+        mode: '0644'
 
     - name: '{{ ansible_name_module }} | set_fact |  authfile for registry'
       set_fact:
@@ -102,10 +164,14 @@
       become: yes
       script: >
         openshift-disconnected-operators/mirror-operator-catalogue.py \
-          --catalog-version=1.0.0 --authfile={{ operator_registry_pull_secret_file }} \
+          --catalog-version=1.0.0 \
           --registry-olm=localhost:5000 --registry-catalog=localhost:5000 --icsp-scope=namespace --run-dir={{ dir_bundle_staging }} \
           --operator-image-name={{ item.key }} --operator-catalog-image-url={{ item.value.source.split(':')[0] }}  \
           --output={{ dir_bundle_staging }}/{{ item.key }}-publish --operator-channel={{ item.value.source.split(':')[1] }} \
+          --opm-path={{ opm_binary }} \
+          --ocp-version={{ item.value.source.split(':')[1] }} \
+          --oc-cli-path={{ openshift_client_binary }} \
+          --authfile={{ operator_registry_pull_secret_file }} \
           --operator-file={{ dir_bundle_staging }}/{{ item.key }}
       args:
         executable: python3
