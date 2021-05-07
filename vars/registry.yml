@@ -5,13 +5,17 @@ ansible_name: " {{ name_vendor }} | Konductor | Infra Automation"
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 openshift_client_binary: '/usr/bin/oc'
 opm_binary: '/usr/bin/opm'
+opm_temp_dir: '/tmp'
+opm_binary_download_url: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'
+opm_binary_downloaded_artifact: 'opm-linux.tar.gz'
+install_opm: 'true'
 
 registry_host_fqdn: '{{ vault_registry_host_fqdn }}'
 registry_admin_username: '{{ vault_registry_admin_username }}'
 registry_admin_password: '{{ vault_registry_admin_password }}'
 registry_container_name: 'mirror-registry'
 registry_container_image: 'docker.io/library/registry:2'
-registry_container_dir: '/data/registry'
+registry_container_dir: '/tmp/registry'
 operator_local_repository: 'openshift4/custom-operators'
 
 operator_registries_to_mirror:
@@ -43,14 +47,17 @@ operator_registries_to_mirror:
 default_operator_registry: 'registry.redhat.io'
 default_operator_registry_username: '{{ vault_default_operator_registry_username }}'
 default_operator_registry_password: '{{ vault_default_operator_registry_password }}'
+default_operand_registry: 'quay.io'
+default_operand_registry_username: '{{ vault_default_operand_registry_username }}'
+default_operand_registry_password: '{{ vault_default_operand_registry_password }}'
 rh_security_operators:
   - compliance-rhel8-operator
   - file-integrity-rhel8-operator
 
-dir_bundle_location: "/data/bundles/artifactory"
+dir_bundle_location: "/tmp/bundles/artifactory"
 bundle_file_name: 'operators-bundle.tar.xz'
-bundle_file_location: "/data/staging/operators-bundle.tar.xz"
-dir_bundle_staging: "/data/staging"
+bundle_file_location: "/tmp/staging/operators-bundle.tar.xz"
+dir_bundle_staging: "/tmp/staging"
 bundle: 'true'
 unpack_bundle: 'true'
 
