@@ -12,9 +12,9 @@
 
   tasks:
     - name: '{{ ansible_name_module }} | file:directory | Ensure all directory exist'
-      #become: yes
       command: >
         podman rm -f {{ registry_container_name }}
+      ignore_errors: yes
       register: registry_container_removed
 
     - name: '{{ ansible_name_module }} | file:directory | Ensure all directory exist'
@@ -161,7 +161,6 @@
         - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list != ""
 
     - name: Mirror operators using Arvin's python script
-      become: yes
       script: >
         openshift-disconnected-operators/mirror-operator-catalogue.py \
           --catalog-version=1.0.0 \
