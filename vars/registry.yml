@@ -5,12 +5,12 @@ ansible_name: " {{ name_vendor }} | Konductor | Infra Automation"
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 openshift_client_binary: '/usr/bin/oc'
 opm_binary: '/usr/bin/opm'
-opm_temp_dir: '/claudedatavol/data'
+opm_temp_dir: '/data'
 opm_binary_download_url: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'
 opm_binary_downloaded_artifact: 'opm-linux.tar.gz'
 install_opm: 'true'
 grpcurl_binary: '/usr/bin/grpcurl'
-grpcurl_temp_dir: '/claudedatavol/data'
+grpcurl_temp_dir: '/data'
 grpcurl_binary_download_url: 'https://github.com/fullstorydev/grpcurl/releases/download/v1.8.1/grpcurl_1.8.1_linux_x86_64.tar.gz'
 grpcurl_binary_downloaded_artifact: 'grpcurl_1.8.1_linux_x86_64.tar.gz'
 install_grpcurl: 'true'
@@ -21,7 +21,7 @@ registry_admin_username: '{{ vault_registry_admin_username }}'
 registry_admin_password: '{{ vault_registry_admin_password }}'
 registry_container_name: 'mirror-registry'
 registry_container_image: 'docker.io/library/registry:2'
-registry_container_dir: '/claudedatavol/data/registry'
+registry_container_dir: '/data/registry'
 operator_local_repository: 'openshift4/custom-operators'
 
 operator_registries_to_mirror:
@@ -61,10 +61,10 @@ rh_security_operators:
   - compliance-rhel8-operator
   - file-integrity-rhel8-operator
 
-dir_bundle_location: "/claudedatavol/data/bundles/artifactory"
+dir_bundle_location: "/data/bundles/artifactory"
 bundle_file_name: 'operators-bundle.tar.xz'
-bundle_file_location: "/claudedatavol/data/staging/operators-bundle.tar.xz"
-dir_bundle_staging: "/claudedatavol/data/staging"
+bundle_file_location: "/data/staging/operators-bundle.tar.xz"
+dir_bundle_staging: "/data/staging"
 bundle: 'false'
 unpack_bundle: 'true'
 
