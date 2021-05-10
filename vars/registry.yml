@@ -5,17 +5,23 @@ ansible_name: " {{ name_vendor }} | Konductor | Infra Automation"
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 openshift_client_binary: '/usr/bin/oc'
 opm_binary: '/usr/bin/opm'
-opm_temp_dir: '/tmp'
+opm_temp_dir: '/claudedatavol/data'
 opm_binary_download_url: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'
 opm_binary_downloaded_artifact: 'opm-linux.tar.gz'
 install_opm: 'true'
+grpcurl_binary: '/usr/bin/grpcurl'
+grpcurl_temp_dir: '/claudedatavol/data'
+grpcurl_binary_download_url: 'https://github.com/fullstorydev/grpcurl/releases/download/v1.8.1/grpcurl_1.8.1_linux_x86_64.tar.gz'
+grpcurl_binary_downloaded_artifact: 'grpcurl_1.8.1_linux_x86_64.tar.gz'
+install_grpcurl: 'true'
+pull_all: 'false'
 
 registry_host_fqdn: '{{ vault_registry_host_fqdn }}'
 registry_admin_username: '{{ vault_registry_admin_username }}'
 registry_admin_password: '{{ vault_registry_admin_password }}'
 registry_container_name: 'mirror-registry'
 registry_container_image: 'docker.io/library/registry:2'
-registry_container_dir: '/tmp/registry'
+registry_container_dir: '/claudedatavol/data/registry'
 operator_local_repository: 'openshift4/custom-operators'
 
 operator_registries_to_mirror:
@@ -23,7 +29,8 @@ operator_registries_to_mirror:
     source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
     container_port: '50051'
     host_port: 50051
-    mirrored_operator_list: "3scale-operator,advanced-cluster-management,apicast-operator,amq-streams,businessautomation-operator,cluster-kube-descheduler-operator,cluster-logging,clusterresourceoverride,codeready-workspaces,compliance-operator,container-security-operator,elasticsearch-operator,file-integrity-operator,jaeger-product,kiali-ossm,kubevirt-hyperconverged,local-storage-operator,metering-ocp,nfd,ocs-operator,ptp-operator,rhsso-operator,serverless-operator,servicemeshoperator,sriov-network-operator,web-terminal"
+    #kubevirt-hyperconverged,sriov-network-operator is beaking the mirroring
+    mirrored_operator_list: "3scale-operator,advanced-cluster-management,apicast-operator,amq-streams,businessautomation-operator,cluster-kube-descheduler-operator,cluster-logging,clusterresourceoverride,codeready-workspaces,compliance-operator,container-security-operator,costmanagement-metrics-operator,elasticsearch-operator,file-integrity-operator,jaeger-product,kiali-ossm,local-storage-operator,mtc-operator,nfd,ocs-operator,openshift-gitops-operator,openshift-jenkins-operator,openshift-pipelines-operator-rh,ptp-operator,rhsso-operator,serverless-operator,servicemeshoperator,web-terminal"
     mirror: "true"
   community-operators:
     source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
@@ -54,11 +61,11 @@ rh_security_operators:
   - compliance-rhel8-operator
   - file-integrity-rhel8-operator
 
-dir_bundle_location: "/tmp/bundles/artifactory"
+dir_bundle_location: "/claudedatavol/data/bundles/artifactory"
 bundle_file_name: 'operators-bundle.tar.xz'
-bundle_file_location: "/tmp/staging/operators-bundle.tar.xz"
-dir_bundle_staging: "/tmp/staging"
-bundle: 'true'
+bundle_file_location: "/claudedatavol/data/staging/operators-bundle.tar.xz"
+dir_bundle_staging: "/claudedatavol/data/staging"
+bundle: 'false'
 unpack_bundle: 'true'
 
 #####################################################################################################
