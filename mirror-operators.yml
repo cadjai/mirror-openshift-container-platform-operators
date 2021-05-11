@@ -1,24 +1,32 @@
 #!/usr/local/bin/ansible-playbook --inventory=inventory
 - name: ' Konductor | Provision UPI Infra | mirror-operators.yml'
   hosts: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.6
+    module: "mirror-operators"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
   vars_files:
     - 'vars/vault.yml'
     - 'vars/registry.yml'
-  vars:
-    ansible_python_interpreter: /usr/bin/python
-    module: "mirror-operators"
-    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+
+  pre_tasks:
+    - name: Install required depencies 
+      become: yes
+      yum:
+        name:
+          - python3-libselinux 
+        state: present
 
   tasks:
     - name: '{{ ansible_name_module }} | Download, install and configure grpcurl '
       when:
-        - install_grpcurl is defined
-        - install_grpcurl | bool
+        - pull_all is defined
+        - pull_all | bool
       block:
         - name: '{{ ansible_name_module }} | get_url | '
           get_url:
             url: "{{ grpcurl_binary_download_url }}"
-            dest: "{{ grpcurl_temp_dir }}"
+            dest: "{{ temp_dir }}"
             mode: 0755
             force: true
             validate_certs: false
@@ -27,7 +35,7 @@
         - name: '{{ ansible_name_module }} | unarchive | unpack grpcurl archive'
           become: yes
           unarchive:
-            src: "{{ grpcurl_temp_dir }}/{{ grpcurl_binary_downloaded_artifact }}"
+            src: "{{ temp_dir }}/{{ grpcurl_binary_downloaded_artifact }}"
             dest: "{{  grpcurl_binary | dirname }}"
             mode: 0755
             remote_src: true
@@ -59,7 +67,7 @@
         - name: '{{ ansible_name_module }} | get_url | download opm binary'
           get_url:
             url: "{{ opm_binary_download_url }}"
-            dest: "{{ opm_temp_dir }}"
+            dest: "{{ temp_dir }}"
             mode: 0755
             force: true
             validate_certs: false
@@ -68,7 +76,7 @@
         - name: '{{ ansible_name_module }} | unarchive | unpack opm archive'
           become: yes
           unarchive:
-            src: "{{ opm_temp_dir }}/{{ opm_binary_downloaded_artifact }}"
+            src: "{{ temp_dir }}/{{ opm_binary_downloaded_artifact }}"
             dest: "{{  opm_binary | dirname }}"
             mode: 0755
             remote_src: true
@@ -125,15 +133,6 @@
          -p {{ default_operator_registry_password }} \
          --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
           {{ default_operator_registry }}
-      register: authfile_created
-
-    - name: '{{ ansible_name_module }} | podman:login | Login to quay container registry'
-      no_log: true
-      command: >
-         podman login -u {{ default_operand_registry_username }} \
-         -p {{ default_operand_registry_password }} \
-         --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
-          {{ default_operand_registry }}
       register: authfile_created
 
     - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'

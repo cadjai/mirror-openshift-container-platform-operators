@@ -8,7 +8,7 @@ opm_binary: '/usr/bin/opm'
 temp_dir: '/data'
 opm_binary_download_url: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'
 opm_binary_downloaded_artifact: 'opm-linux.tar.gz'
-install_opm: 'true'
+install_opm: 'false'
 grpcurl_binary: '/usr/bin/grpcurl'
 grpcurl_binary_download_url: 'https://github.com/fullstorydev/grpcurl/releases/download/v1.8.1/grpcurl_1.8.1_linux_x86_64.tar.gz'
 grpcurl_binary_downloaded_artifact: 'grpcurl_1.8.1_linux_x86_64.tar.gz'
@@ -52,15 +52,12 @@ operator_registries_to_mirror:
 default_operator_registry: 'registry.redhat.io'
 default_operator_registry_username: '{{ vault_default_operator_registry_username }}'
 default_operator_registry_password: '{{ vault_default_operator_registry_password }}'
-default_operand_registry: 'quay.io'
-default_operand_registry_username: '{{ vault_default_operand_registry_username }}'
-default_operand_registry_password: '{{ vault_default_operand_registry_password }}'
 
 dir_bundle_location: "/data/bundles"
 bundle_file_name: 'operators-bundle.tar.xz'
 bundle_file_location: "/data/staging/operators-bundle.tar.xz"
 dir_bundle_staging: "/data/staging"
-bundle: 'false'
+bundle: 'true'
 unpack_bundle: 'true'
 
 #####################################################################################################
