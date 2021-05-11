@@ -41,128 +41,130 @@ The playbooks here only require ansible to run.
 ## Playbook Variables
 
 ### openshift_client_binary
-Optional:
-Default: '/usr/bin/oc'
-The location of the OpenShift client on the Internet Connected Collection Device if you prefer to use your own installed client.
+Optional:   
+Default: '/usr/bin/oc'   
+The location of the OpenShift client on the Internet Connected Collection Device if you prefer to use your own installed client.   
 
 ### opm_binary
-Optional:
-Default: '/usr/bin/opm'
-The location of the opm tool client binary on the Internet Connected Collection Device if you prefer to use your own installed version or want it installed for later use.   
+Optional:   
+Default: '/usr/bin/opm'   
+The location of the opm tool client binary on the Internet Connected Collection Device if you prefer to use your own installed version or want it installed for later use.    
 
 ### opm_binary_download_url
-Optional: 
-Default: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'
-The URL to download the opm client from. Only required if the install_opm is set to true and you want to opm client installed on the host.
+Optional:    
+Default: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'   
+The URL to download the opm client from. Only required if the install_opm is set to true and you want to opm client installed on the host.   
 
 ### temp_dir
-Optional:
-Default: '/data'
-The temporary location the archive is downloaded into before being installed on the host. Only required if the opm or grpcurl client is being installed for later use. 
+Optional:   
+Default: '/data'   
+The temporary location the archive is downloaded into before being installed on the host. Only required if the opm or grpcurl client is being installed for later use.    
 
 ### opm_binary_downloaded_artifact
-Optional:
-Default: 'opm-linux.tar.gz'
-The name of the opm client archive downloaded to the temp location used for the installation. 
+Optional:   
+Default: 'opm-linux.tar.gz'   
+The name of the opm client archive downloaded to the temp location used for the installation.   
 
 ### grpcurl_binary
-Optional:
-Default: '/usr/bin/grpcurl'
-The location of the grpcurl tool client binary on the Internet Connected Collection Device. Only required if the pull_all is set to true to pull all operators for each of the indices.
+Optional:   
+Default: '/usr/bin/grpcurl'   
+The location of the grpcurl tool client binary on the Internet Connected Collection Device. Only required if the pull_all is set to true to pull all operators for each of the indices.   
 
 ### grpcurl_binary_download_url
-Optional: 
-Default: 'https://github.com/fullstorydev/grpcurl/releases/download/v1.8.1/grpcurl_1.8.1_linux_x86_64.tar.gz'
-The URL to download the opm client from. Only required if the install_grpcurl is set to true. Only required if the pull_all is set to true to pull all operators for each of the indices.
+Optional:   
+Default: 'https://github.com/fullstorydev/grpcurl/releases/download/v1.8.1/grpcurl_1.8.1_linux_x86_64.tar.gz'   
+The URL to download the opm client from. Only required if the install_grpcurl is set to true. Only required if the pull_all is set to true to pull all operators for each of the indices.   
 
 ### grpcurl_binary_downloaded_artifact
-Optional:
-Default: 'grpcurl_1.8.1_linux_x86_64.tar.gz'
-The name of the grpcurl client archive downloaded to the temp location used for the installation. Only required if the pull_all is set to true to pull all operators for each of the indices. 
+Optional:   
+Default: 'grpcurl_1.8.1_linux_x86_64.tar.gz'   
+The name of the grpcurl client archive downloaded to the temp location used for the installation. Only required if the pull_all is set to true to pull all operators for each of the indices.    
 
 ### pull_all
-Optional:
-Default: 'false'
-The flag used to determine if all operators for each of the operator index are mirrored.
+Optional:   
+Default: 'false'   
+The flag used to determine if all operators for each of the operator index are mirrored.   
 
 ### registry_host_fqdn
-Required:
-The FQDN or IP of the destination registry. This is used by the push-operators-to-registry.yml playbook to push the mirrored operators to the registry.
+Required:   
+The FQDN or IP of the destination registry. This is used by the push-operators-to-registry.yml playbook to push the mirrored operators to the registry.   
 
 ### registry_admin_username
-Required:
-The username associated to the user used to push the mirrored operators to the destination registry. This is used by the push-operators-to-registry.yml playbook to push the mirrored operators to the registry.
+Required:   
+The username associated to the user used to push the mirrored operators to the destination registry. This is used by the push-operators-to-registry.yml playbook to push the mirrored operators to the registry.   
 
 ### registry_admin_password
-Required:
-The password associated to the user used to push the mirrored operators to the destination registry. This is used by the push-operators-to-registry.yml playbook to push the mirrored operators to the registry.
+Required:   
+The password associated to the user used to push the mirrored operators to the destination registry. This is used by the push-operators-to-registry.yml playbook to push the mirrored operators to the registry.   
 
 ### registry_container_name
-Optional: 
-Default: mirror-registry
-The name of the container registry used to stage the operator mirror.  
+Optional:   
+Default: mirror-registry   
+The name of the container registry used to stage the operator mirror.   
 
 ### registry_container_image
-Optional: 
-Default: 'docker.io/library/registry:2'
-The registry container image used for to stage the mirror process.
+Optional:  
+Default: 'docker.io/library/registry:2'   
+The registry container image used for to stage the mirror process.   
 
 ### registry_container_dir
-Optional: 
-Default: '/data/registry'
-The host directory that is mounted into the container registry to store the operator and operand images pulled into the temp container registry.
+Optional:   
+Default: '/data/registry'   
+The host directory that is mounted into the container registry to store the operator and operand images pulled into the temp container registry.   
 
 ### operator_local_repository
-Required:
-The destination repository for all operator and operand images on the destionation registry.
+Required:   
+The destination repository for all operator and operand images on the destionation registry.   
 
 ### default_operator_registry
-Optional:
-Default: 'registry.redhat.io'
-The source registry where operators are been pulled from.
+Optional:   
+Default: 'registry.redhat.io'   
+The source registry where operators are been pulled from.   
 
 ### default_operator_registry_username
-Required:
-The username or service account used to pull operators from the default operator registry referenced above.
+Required:   
+The username or service account used to pull operators from the default operator registry referenced above.   
 
 ### default_operator_registry_password
-Required:
-The password associated to the username or service account for the source registry.
+Required:   
+The password associated to the username or service account for the source registry.   
 
 ### dir_bundle_location
-Optional:
-Default: "/data/bundles"
-The location on the host where the mirrored operator content bundle is stored
+Optional:   
+Default: "/data/bundles"   
+The location on the host where the mirrored operator content bundle is stored.    
 
 ### bundle_file_name
-Optional:
-Default: 'operators-bundle.tar.xz'
-The name of the mirrored operator content bundle.
+Optional:   
+Default: 'operators-bundle.tar.xz'   
+The name of the mirrored operator content bundle.   
 
 ### bundle_file_location
-Optional:
-Default: "/data/staging/operators-bundle.tar.xz"
-The location on the host used to push the mirrored content to the destination registry. 
+Optional:   
+Default: "/data/staging/operators-bundle.tar.xz"   
+The location on the host used to push the mirrored content to the destination registry.    
 
 ### dir_bundle_staging
-Optional:
-Default: "/data/staging"
-The staging location where the staging is processed from. The resulting manifests from the pull operation can be found in there. 
+Optional:   
+Default: "/data/staging"   
+The staging location where the staging is processed from. The resulting manifests from the pull operation can be found in there.    
 
 ### bundle
-Optional:
-Default: 'true'
-The flag to indicate if the bundle should be created after the content has been mirrored. 
+Optional:   
+Default: 'true'   
+The flag to indicate if the bundle should be created after the content has been mirrored.    
+
 ### unpack_bundle
-Optional:
-Default: 'true'
-The flag to indicate if the bundle should be unpacked before being pushed to the destination registry.  
+Optional:   
+Default: 'true'   
+The flag to indicate if the bundle should be unpacked before being pushed to the destination registry.   
 
 ### operator_registries_to_mirror
-Optional:
-Default: (see structure below)
-The dictionary containing list of operators to mirror per operator index listed within the dictionary.   
-	```
+Optional:   
+Default: (see structure below)   
+The dictionary containing list of operators to mirror per operator index listed within the dictionary.    
+
+	```   
 	operator_registries_to_mirror:  
           redhat-operators:  
             source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'  
