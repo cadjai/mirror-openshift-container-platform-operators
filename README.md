@@ -161,31 +161,31 @@ The flag to indicate if the bundle should be unpacked before being pushed to the
 ### operator_registries_to_mirror
 Optional:
 Default: (see structure below)
-The dictionary containing list of operators to mirror per operator index listed within the dictionary. 
+The dictionary containing list of operators to mirror per operator index listed within the dictionary.   
 	```
-	operator_registries_to_mirror:
-          redhat-operators:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            container_port: '50051'
-            host_port: 50051
-            #kubevirt-hyperconverged,sriov-network-operator is beaking the mirroring
-            mirrored_operator_list: "3scale-operator,advanced-cluster-management,apicast-operator,amq-streams,businessautomation-operator,cluster-kube-descheduler-operator,cluster-logging,clusterresourceoverride,codeready-workspaces,compliance-operator,container-security-operator,costmanagement-metrics-operator,elasticsearch-operator,file-integrity-operator,jaeger-product,kiali-ossm,local-storage-operator,mtc-operator,nfd,ocs-operator,openshift-gitops-operator,openshift-jenkins-operator,openshift-pipelines-operator-rh,ptp-operator,rhsso-operator,serverless-operator,servicemeshoperator,web-terminal"
-            mirror: "true"
-          community-operators:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            container_port: 50051
-            host_port: 40051
-            mirrored_operator_list: "group-sync-operator,keycloak-operator,koku-metrics-operator,konveyor-forklift-operator,konveyor-operator,namespace-configuration-operator,prometheus,prometheus-exporter-operator,splunk,argocd-operator,argocd-operator-helm"
-            mirror: "true"
-          market-operators:
-            source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.7'
-            container_port: 50051
-            host_port: 30051
-            mirrored_operator_list: ""
-            mirror: "false"
-          certified-operators:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            container_port: 50051
-            host_port: 20051
-            mirrored_operator_list: "anchore-engine,elasticsearch-eck-operator-certified,falco-certified,gitlab-operator,gitlab-runner-operator,gpu-operator-certified,nginx-ingress-operator,node-red-operator-certified,openshiftartifactoryha-operator,openshiftpipeline-operator,openshiftxray-operator,prisma-cloud-compute-console-operator.v2.0.1,redhat-marketplace-operator,rocketchat-operator-certified,splunk-certified"
+	operator_registries_to_mirror:  
+          redhat-operators:  
+            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'  
+            container_port: '50051'  
+            host_port: 50051  
+            #kubevirt-hyperconverged,sriov-network-operator is beaking the mirroring  
+            mirrored_operator_list: "3scale-operator,advanced-cluster-management,apicast-operator,amq-streams,businessautomation-operator,cluster-kube-descheduler-operator,cluster-logging,clusterresourceoverride,codeready-workspaces,compliance-operator,container-security-operator,costmanagement-metrics-operator,elasticsearch-operator,file-integrity-operator,jaeger-product,kiali-ossm,local-storage-operator,mtc-operator,nfd,ocs-operator,openshift-gitops-operator,openshift-jenkins-operator,openshift-pipelines-operator-rh,ptp-operator,rhsso-operator,serverless-operator,servicemeshoperator,web-terminal"  
+            mirror: "true"  
+          community-operators:  
+            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'  
+            container_port: 50051  
+            host_port: 40051  
+            mirrored_operator_list: "group-sync-operator,keycloak-operator,koku-metrics-operator,konveyor-forklift-operator,konveyor-operator,namespace-configuration-operator,prometheus,prometheus-exporter-operator,splunk,argocd-operator,argocd-operator-helm"  
+            mirror: "true"  
+          market-operators:  
+            source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.7'  
+            container_port: 50051  
+            host_port: 30051  
+            mirrored_operator_list: ""  
+            mirror: "false"  
+          certified-operators:  
+            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'  
+            container_port: 50051  
+            host_port: 20051  
+            mirrored_operator_list: "anchore-engine,elasticsearch-eck-operator-certified,falco-certified,gitlab-operator,gitlab-runner-operator,gpu-operator-certified,nginx-ingress-operator,node-red-operator-certified,openshiftartifactoryha-operator,openshiftpipeline-operator,openshiftxray-operator,prisma-cloud-compute-console-operator.v2.0.1,redhat-marketplace-operator,rocketchat-operator-certified,splunk-certified"  
 	```
