@@ -164,7 +164,6 @@ Optional:
 Default: (see structure below)   
 The dictionary containing list of operators to mirror per operator index listed within the dictionary.    
 
-	```
 	operator_registries_to_mirror:  
           redhat-operators:  
             source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'  
@@ -190,4 +189,3 @@ The dictionary containing list of operators to mirror per operator index listed 
             container_port: 50051  
             host_port: 20051  
             mirrored_operator_list: "anchore-engine,elasticsearch-eck-operator-certified,falco-certified,gitlab-operator,gitlab-runner-operator,gpu-operator-certified,nginx-ingress-operator,node-red-operator-certified,openshiftartifactoryha-operator,openshiftpipeline-operator,openshiftxray-operator,prisma-cloud-compute-console-operator.v2.0.1,redhat-marketplace-operator,rocketchat-operator-certified,splunk-certified"  
-	```
