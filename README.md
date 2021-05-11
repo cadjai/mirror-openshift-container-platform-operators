@@ -164,7 +164,7 @@ Optional:
 Default: (see structure below)   
 The dictionary containing list of operators to mirror per operator index listed within the dictionary.    
 
-	```   
+	```
 	operator_registries_to_mirror:  
           redhat-operators:  
             source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'  
