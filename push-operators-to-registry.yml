@@ -60,17 +60,38 @@
         - item.value.source is defined and item.value.source != ""
       register: operators_uploaded
 
-    - name: Upload operator index to registry
-      become: yes
-      command: >
-        skopeo copy docker://localhost:5000/custom-{{ item.value.source.split('/')[2] }} \
-           docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ item.value.source.split('/')[1] }}/{{ item.value.source.split('/')[2] }} \
-           --tls-verify=false --all --authfile={{ registry_auth_config }}
+    - name: Retreive custom index tag
+      shell: >
+        curl -v http://localhost:5000/v2/custom-{{ (item.value.source.split('/')[2]).split(':')[0] }}/tags/list | jq .tags[]
+      args:
+        warn: no
       with_dict:
         - "{{ operator_registries_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
+      register: index_tags
+
+    - name: Set custom index image name
+      set_fact:
+        custom_index_image_name: "{{ custom_index_image_name | default([]) + ['custom-' + item.item.key + '-index:' + item.stdout | from_json] }}"
+      loop: "{{ index_tags.results }}"
+      when:
+        - item.skipped is undefined
+        - item.stdout is defined
+
+    - name: Upload operator index to registry
+      become: yes
+      command: >
+        skopeo copy docker://localhost:5000/{{ custom_index_image_name[idx] }}  \
+           docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[1] }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[2] }} \
+           --tls-verify=false --all --authfile={{ registry_auth_config }}
+      loop: "{{ index_tags.results }}"
+      loop_control:
+        index_var: idx
+      when:
+        - item.skipped is undefined
+        - item.stdout is defined
       register: operator_indices_uploaded
 
