@@ -17,6 +17,10 @@
           - python3-libselinux 
         state: present
 
+    - name: '{{ ansible_name_module }} | pip install | install required module'
+      pip:
+        name: jinja2
+
   tasks:
     - name: '{{ ansible_name_module }} | Download, install and configure grpcurl '
       when:
@@ -58,6 +62,7 @@
         - "{{ dir_bundle_location }}"
         - "{{ dir_bundle_staging }}"
         - "{{ dir_bundle_staging }}/run"
+        - "{{ dir_bundle_staging }}/scripts"
 
     - name: '{{ ansible_name_module }} | Download, install and configure opm '
       when:
@@ -184,6 +189,16 @@
         - openshift-disconnected-operators/image-content-source-template
         - openshift-disconnected-operators/catalog-source-template
 
+    - name: '{{ ansible_name_module }} | copy | copy python modules into the script directory for execution '
+      copy:
+        src: "{{ item }}"
+        dest: "{{ dir_bundle_staging }}/scripts/{{ item | basename }}"
+        force: yes
+        mode: '0755'
+      with_items:
+        - openshift-disconnected-operators/mirror-operator-catalogue.py
+        - openshift-disconnected-operators/upgradepath.py
+
     - name: '{{ ansible_name_module }} | shell:echo | create a line separated list of the items to mirror 1 of 2'
       shell: echo {{ item.value.mirrored_operator_list }} > {{ dir_bundle_staging }}/{{ item.key }}
       with_dict:
@@ -221,18 +236,27 @@
 
     - name: Mirror operators using Arvin's python script
       script: >
-        openshift-disconnected-operators/mirror-operator-catalogue.py \
-          --catalog-version=1.0.0 \
-          --registry-olm=localhost:5000 --registry-catalog=localhost:5000 --icsp-scope=namespace --run-dir={{ dir_bundle_staging }} \
-          --operator-image-name={{ item.key }} --operator-catalog-image-url={{ item.value.source.split(':')[0] }}  \
-          --output={{ dir_bundle_staging }}/{{ item.key }}-publish --operator-channel={{ item.value.source.split(':')[1] }} \
-          --opm-path={{ opm_binary }} \
-          --ocp-version={{ item.value.source.split(':')[1] }} \
-          --oc-cli-path={{ openshift_client_binary }} \
-          --authfile={{ operator_registry_pull_secret_file }} \
-          --operator-file={{ dir_bundle_staging }}/{{ item.key }}
+        {{ dir_bundle_staging }}/scripts/mirror-operator-catalogue.py \
+              --catalog-version=1.0.0 \
+              --authfile={{ operator_registry_pull_secret_file }} \
+              --registry-olm=localhost:5000 \
+              --registry-catalog=localhost:5000 \
+              --icsp-scope=namespace \
+              --run-dir={{ dir_bundle_staging }} \
+              --operator-image-name={{ item.key }} \
+              --operator-catalog-image-url={{ item.value.source.split(':')[0] }}  \
+              --opm-path={{ opm_binary }} \
+              --custom-operator-catalog-name=custom-{{ item.key }} \
+              --oc-cli-path={{ openshift_cli }} \
+              --ocp-version={{ ocp_release_version }} \
+              --output={{ item.key }}-publish \
+              --operator-channel={{ item.value.source.split(':')[1] }} \
+              --operator-file={{ dir_bundle_staging }}/{{ item.key }}
       args:
         executable: python3
+        chdir: "{{ dir_bundle_staging }}/scripts/"
+      environment:
+        - PYTHONPATH: "{{ dir_bundle_staging }}/scripts/"
       with_dict:
         - "{{ operator_registries_to_mirror }}"
       when:
