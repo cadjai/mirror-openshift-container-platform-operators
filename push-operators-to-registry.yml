@@ -11,6 +11,22 @@
     module: "push-operators-to-registry"
     ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
 
+  pre_tasks:
+    - name: '{{ ansible_name_module }} | check if oc client is available on controller if required'
+      command: which oc
+      ignore_errors: yes
+      register: oc_client_check
+
+    - name: Set OC Client Path in case it is not defined
+      set_fact:
+        oc_client: "{{ oc_client_check.stdout }}"
+      when:
+        - not oc_client is defined
+        - oc_client_check is defined
+        - oc_client_check.rc is defined
+        - oc_client_check.rc == 0
+        - oc_client_check.stdout is defined
+
   tasks:
     - name: '{{ ansible_name_module }} | block | unpack bundle to controller if required'
       when:
@@ -84,6 +100,23 @@
     - name: Upload operator index to registry
       become: yes
       command: >
+        {{ oc_client.stdout }} image mirror localhost:5000/{{ custom_index_image_name[idx] }}  \
+           {{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[1] }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[2] }} \
+           --keep-manifest-list=true --insecure=true \
+           -a {{ registry_auth_config }}
+      loop: "{{ index_tags.results }}"
+      loop_control:
+        index_var: idx
+      when:
+        - oc_client is defined
+        - oc_client != ''
+        - item.skipped is undefined
+        - item.stdout is defined
+      register: operator_indices_uploaded
+
+    - name: Upload operator index to registry
+      become: yes
+      command: >
         skopeo copy docker://localhost:5000/{{ custom_index_image_name[idx] }}  \
            docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[1] }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[2] }} \
            --tls-verify=false --all --authfile={{ registry_auth_config }}
@@ -91,6 +124,7 @@
       loop_control:
         index_var: idx
       when:
+        - not oc_client is defined or oc_client == ""
         - item.skipped is undefined
         - item.stdout is defined
       register: operator_indices_uploaded
