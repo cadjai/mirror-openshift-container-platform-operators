@@ -196,7 +196,7 @@
         force: yes
         mode: '0755'
       with_items:
-        - openshift-disconnected-operators/mirror-operator-catalogue.py
+        - mirror-operator-catalogue.py
         - openshift-disconnected-operators/upgradepath.py
 
     - name: '{{ ansible_name_module }} | shell:echo | create a line separated list of the items to mirror 1 of 2'
