@@ -12,6 +12,27 @@ If you need all versions of operand images, you can either use the [role](https:
 
 To help ready the file system of the pulled images from the above step (using the Arvin script) so that the images can easily be pushed to the destination registry, the second script from [Alex Flom](https://github.com/RedHatGov/openshift-disconnected-operators/blob/master/container/upload.sh) is used to fix the v2 registry file system layout to help push the content into the destination registry.
 
+If you need to get an updated list of operators different from the list for the various keys in operator_registries_to_mirror, use the following sample commands:
+```
+podman run -d --name operator_collector_redhat-operators -p 50051:50051 registry.redhat.io/redhat/redhat-operator-index:v4.7
+
+podman run -d --name operator_collector_redhat-community-operators -p 40051:50051 registry.redhat.io/redhat/community-operator-index:v4.7
+
+podman run -d --name operator_collector_redhat-certified-operators -p 20051:50051 registry.redhat.io/redhat/certified-operator-index:v4.7
+
+podman run -d --name operator_collector_redhat-market-operators -p 30051:50051 registry.redhat.io/redhat/redhat-marketplace-index:v4.7
+
+grpcurl -plaintext localhost:50051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-operators.out
+
+grpcurl -plaintext localhost:40051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-community-operators.out
+
+grpcurl -plaintext localhost:20051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-certified-operators.out
+
+grpcurl -plaintext localhost:30051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-market-operators.out
+```
+The generated files contain the name of the operators and you can pick the ones you want for each of the operator index.
+
+
 ## Requirements
 
 It is recommended to look at the source repositories for each of the main scripts for the requirements of that script.  
