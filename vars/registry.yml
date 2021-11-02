@@ -22,6 +22,8 @@ registry_container_name: 'mirror-registry'
 registry_container_image: 'docker.io/library/registry:2'
 registry_container_dir: '{{ root_drive }}/registry'
 operator_local_repository: 'openshift4/custom-operators'
+openshift_cli: '/usr/bin/oc'
+ocp_release_version: "4.7.4"
 
 operator_registries_to_mirror:
   redhat-operators:
