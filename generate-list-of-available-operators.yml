@@ -1,0 +1,62 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- name: ' Konductor | Provision UPI Infra | generate-list-of-available-operators.yml'
+  hosts: localhost
+  become: yes
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/global.yml'
+  vars:
+    module: "generate operator list"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+
+  tasks:
+    - name: '{{ ansible_name_module }} | set_fact | Set the date suffix'
+      set_fact:
+        operator_list_suffix: "-{{ lookup('pipe', 'date +%Y%m%d') }}"
+
+    - name: '{{ ansible_name_module }} | podman:login | Login to quay container registry'
+      no_log: true
+      command: > 
+         podman login -u {{ default_operator_registry_username }} \
+         -p {{ default_operator_registry_password }} \
+         --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
+          {{ default_operator_registry }} 
+    
+    - name: '{{ ansible_name_module }} | set_fact |  authfile for registry'
+      set_fact:
+        default_operator_registry_auth_config: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json"
+    
+    - name: '{{ ansible_name_module }} | podman:run | Start operator-index container '
+      command: podman run -d --name operator_collector_{{ item.key  }} \
+        -p {{ item.value.host_port }}:{{ item.value.container_port }}  {{ item.value.source }}
+      with_dict:
+        - "{{ operator_registres_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.mirror is defined and item.value.mirror | bool == true
+        - item.value.source is defined and item.value.source != ""
+        - item.value.container_port is defined and item.value.container_port|int > 0
+
+    - name: '{{ ansible_name_module }} | Create Package index '
+      shell: >
+        grpcurl -plaintext localhost:{{ item.value.host_port }} api.Registry/ListPackages \
+        > {{ dir_operator_list_location | d('/tmp') }}/packages-{{ item.key }}{{ operator_list_suffix }}.out
+      with_dict:
+        - "{{ operator_registres_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.mirror is defined and item.value.mirror | bool == true
+        - item.value.host_port is defined and item.value.host_port|int > 0
+        - item.value.container_port is defined and item.value.container_port|int > 0
+      register: pkg_idx_out
+
+    - name: '{{ ansible_name_module }} | podman:rm | Remove operator-index container '
+      command: podman rm -f operator_collector_{{ item.key }} 
+      with_dict:
+        - "{{ operator_registres_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.mirror is defined and item.value.mirror | bool == true
+        - item.value.source is defined and item.value.source != ""
+        - item.value.host_port is defined and item.value.host_port|int > 0
+        - item.value.container_port is defined and item.value.container_port|int > 0
