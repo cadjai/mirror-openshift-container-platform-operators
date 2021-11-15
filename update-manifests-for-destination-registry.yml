@@ -17,6 +17,18 @@
         - stage_manifests is defined
         - stage_manifests | bool 
       block:
+        - name: '{{ ansible_name_module }} | file:directory | Ensure the manifest directory exist'
+          file:
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests"
+            state: directory
+            mode: 0755
+          with_dict:
+            - "{{ operator_registres_to_mirror }}"
+          when:
+            - item.key is defined and item.key != ""
+            - item.value.mirror is defined and item.value.mirror | bool
+            - item.value.source is defined and item.value.source != ""
+
         - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
           copy:
             src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/olm-icsp.yaml" 
