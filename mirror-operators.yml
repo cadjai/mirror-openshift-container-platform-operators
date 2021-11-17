@@ -264,6 +264,39 @@
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
 
+    #######################This is to fix some discrepancies seen after images have been mirrored ############################
+    - name: '{{ ansible_name_module }} | shell:cat | load mapping.txt file'
+      shell: cat {{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt
+      with_dict:
+        - "{{ operator_registres_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.mirror is defined and item.value.mirror | bool
+        - item.value.source is defined and item.value.source != ""
+      register: images_from_mapping
+
+    - name: '{{ ansible_name_module }} | set_fact |create list of all images mirrored'
+      set_fact:
+        mirrored_images_list: "{{ mirrored_images_list | default([]) + item.stdout_lines }}"
+      loop: "{{ images_from_mapping.results }}"
+      when:
+        - not item.skipped is defined
+        - not item.skip_reason is defined
+        - item.stdout_lines is defined
+        - item.stdout_lines | length > 0
+      register: images_mirrored_list_created
+
+    - name: '{{ ansible_name_module }} | oc image mirror | mirror images using the mapping files'
+      command: >
+        oc image mirror {{ item.split('=')[0] }} \
+           localhost:5000/{{ ((item.split('=')[0]).split('/')[1:] | join('/')).split('@sha256')[0] }} \
+           --keep-manifest-list=true --insecure=true \
+           -a {{ operator_registry_pull_secret_file }}
+      loop: "{{ mirrored_images_list }}"
+      register: images_mirrored_2nd_pass
+
+    ####################### End Fix ############################
+    
     - name: '{{ ansible_name_module }} | block | copy manifest files to container storage location'
       when:
         - bundle is defined
