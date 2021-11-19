@@ -4,7 +4,7 @@
   become: yes
   vars_files:
     - 'vars/vault.yml'
-    - 'vars/global.yml'
+    - 'vars/registry.yml'
   vars:
     module: "generate operator list"
     ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
@@ -30,7 +30,7 @@
       command: podman run -d --name operator_collector_{{ item.key  }} \
         -p {{ item.value.host_port }}:{{ item.value.container_port }}  {{ item.value.source }}
       with_dict:
-        - "{{ operator_registres_to_mirror }}"
+        - "{{ operator_registries_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool == true
@@ -42,7 +42,7 @@
         grpcurl -plaintext localhost:{{ item.value.host_port }} api.Registry/ListPackages \
         > {{ dir_operator_list_location | d('/tmp') }}/packages-{{ item.key }}{{ operator_list_suffix }}.out
       with_dict:
-        - "{{ operator_registres_to_mirror }}"
+        - "{{ operator_registries_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool == true
@@ -53,7 +53,7 @@
     - name: '{{ ansible_name_module }} | podman:rm | Remove operator-index container '
       command: podman rm -f operator_collector_{{ item.key }} 
       with_dict:
-        - "{{ operator_registres_to_mirror }}"
+        - "{{ operator_registries_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool == true
