@@ -268,7 +268,7 @@
     - name: '{{ ansible_name_module }} | shell:cat | load mapping.txt file'
       shell: cat {{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt
       with_dict:
-        - "{{ operator_registres_to_mirror }}"
+        - "{{ operator_registries_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
