@@ -39,7 +39,7 @@ operator_registries_to_mirror:
     container_port: 50051
     host_port: 40051
     mirrored_operator_list: "group-sync-operator,keycloak-operator,koku-metrics-operator,konveyor-forklift-operator,konveyor-operator,namespace-configuration-operator,prometheus,prometheus-exporter-operator,splunk,argocd-operator,argocd-operator-helm,jupyterlab-operator"
-    mirror: "true"
+    mirror: "false"
   market-operators:
     source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.7'
     container_port: 50051
@@ -52,6 +52,19 @@ operator_registries_to_mirror:
     host_port: 20051
     mirrored_operator_list: "anchore-engine,elasticsearch-eck-operator-certified,falco-certified,gitlab-runner-operator,gpu-operator-certified,nginx-ingress-operator,node-red-operator-certified,openshiftartifactoryha-operator,openshiftpipeline-operator,openshiftxray-operator,prisma-cloud-compute-console-operator.v2.0.1,redhat-marketplace-operator,rocketchat-operator-certified,splunk-certified,sysdig-certified"
     mirror: "false"
+  community-operators:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.8'
+    container_port: 50051
+    host_port: 40051
+    ### konveyor-operator is no longer part of the index 11192021
+    mirrored_operator_list: "group-sync-operator,keycloak-operator,koku-metrics-operator,konveyor-forklift-operator,namespace-configuration-operator,prometheus,prometheus-exporter-operator,splunk,argocd-operator,argocd-operator-helm,jupyterlab-operator"
+    mirror: "true"
+  jupyterlab-operator:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    container_port: '50051'
+    host_port: 10051
+    mirrored_operator_list: "jupyterlab-operator"
+    mirror: "true"
 
 default_operator_registry: 'registry.redhat.io'
 default_operator_registry_username: '{{ vault_default_operator_registry_username }}'
