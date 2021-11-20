@@ -30,41 +30,177 @@ operator_registries_to_mirror:
     source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
     container_port: '50051'
     host_port: 50051
-    #kubevirt-hyperconverged,sriov-network-operator is beaking the mirroring
-    #apicast-operator is break the mirroring 07102021
-    mirrored_operator_list: "3scale-operator,advanced-cluster-management,amq-streams,businessautomation-operator,cluster-kube-descheduler-operator,cluster-logging,clusterresourceoverride,codeready-workspaces,compliance-operator,container-security-operator,elasticsearch-operator,file-integrity-operator,jaeger-product,kiali-ossm,local-storage-operator,nfd,ocs-operator,ptp-operator,rhsso-operator,serverless-operator,servicemeshoperator,web-terminal,mtc-operator,costmanagement-metrics-operator,cincinnati-operator,performance-addon-operator,rhacs-operator"
+    mirrored_operator_list: 
+      - name: 3scale-operator
+        start_version: ''
+      - name: advanced-cluster-management
+        start_version: ''
+      - name: amq-streams
+        start_version: ''
+      - name: businessautomation-operator
+        start_version: ''
+      - name: cluster-kube-descheduler-operator
+        start_version: ''
+      - name: cluster-logging
+        start_version: ''
+      - name: clusterresourceoverride
+        start_version: ''
+      - name: codeready-workspaces
+        start_version: ''
+      - name: compliance-operator
+        start_version: ''
+      - name: container-security-operator
+        start_version: ''
+      - name: elasticsearch-operator
+        start_version: ''
+      - name: file-integrity-operator
+        start_version: ''
+      - name: jaeger-product
+        start_version: ''
+      - name: kiali-ossm
+        start_version: ''
+      - name: local-storage-operator
+        start_version: ''
+      - name: nfd
+        start_version: ''
+      - name: ocs-operator
+        start_version: ''
+      - name: ptp-operator
+        start_version: ''
+      - name: rhsso-operator
+        start_version: ''
+      - name: serverless-operator
+        start_version: ''
+      - name: servicemeshoperator
+        start_version: ''
+      - name: web-terminal
+        start_version: ''
+      - name: mtc-operator
+        start_version: ''
+      - name: costmanagement-metrics-operator
+        start_version: ''
+      - name: cincinnati-operator
+        start_version: ''
+      - name: performance-addon-operator
+        start_version: ''
+      - name: rhacs-operator
+        start_version: ''
     mirror: "true"
+    upgrade: "false"
   community-operators:
     source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
     container_port: 50051
     host_port: 40051
-    mirrored_operator_list: "group-sync-operator,keycloak-operator,koku-metrics-operator,konveyor-forklift-operator,konveyor-operator,namespace-configuration-operator,prometheus,prometheus-exporter-operator,splunk,argocd-operator,argocd-operator-helm,jupyterlab-operator"
+    mirrored_operator_list: 
+      - name: group-sync-operator
+        start_version: ''
+      - name: keycloak-operator
+        start_version: ''
+      - name: koku-metrics-operator
+        start_version: ''
+      - name: konveyor-forklift-operator
+        start_version: ''
+      - name: konveyor-operator
+        start_version: ''
+      - name: namespace-configuration-operator
+        start_version: ''
+      - name: prometheus
+        start_version: ''
+      - name: prometheus-exporter-operator
+        start_version: ''
+      - name: splunk
+        start_version: ''
+      - name: argocd-operator
+        start_version: ''
+      - name: argocd-operator-helm
+        start_version: ''
+      - name: jupyterlab-operator"
+        start_version: ''
     mirror: "false"
+    upgrade: "false"
   market-operators:
     source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.7'
     container_port: 50051
     host_port: 30051
-    mirrored_operator_list: ""
+    mirrored_operator_list: 
     mirror: "false"
+    upgrade: "false"
   certified-operators:
     source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
     container_port: 50051
     host_port: 20051
-    mirrored_operator_list: "anchore-engine,elasticsearch-eck-operator-certified,falco-certified,gitlab-runner-operator,gpu-operator-certified,nginx-ingress-operator,node-red-operator-certified,openshiftartifactoryha-operator,openshiftpipeline-operator,openshiftxray-operator,prisma-cloud-compute-console-operator.v2.0.1,redhat-marketplace-operator,rocketchat-operator-certified,splunk-certified,sysdig-certified"
+    mirrored_operator_list: 
+      - name: anchore-engine
+        start_version: ''
+      - name: elasticsearch-eck-operator-certified
+        start_version: ''
+      - name: falco-certified
+        start_version: ''
+      - name: gitlab-runner-operator
+        start_version: ''
+      - name: gpu-operator-certified
+        start_version: ''
+      - name: nginx-ingress-operator
+        start_version: ''
+      - name: node-red-operator-certified
+        start_version: ''
+      - name: openshiftartifactoryha-operator
+        start_version: ''
+      - name: openshiftpipeline-operator
+        start_version: ''
+      - name: openshiftxray-operator
+        start_version: ''
+      - name: prisma-cloud-compute-console-operator.v2.0.1
+        start_version: ''
+      - name: redhat-marketplace-operator
+        start_version: ''
+      - name: rocketchat-operator-certified
+        start_version: ''
+      - name: splunk-certified
+        start_version: ''
+      - name: sysdig-certified
+        start_version: ''
     mirror: "false"
+    upgrade: "false"
   community-operators:
     source: 'registry.redhat.io/redhat/community-operator-index:v4.8'
     container_port: 50051
     host_port: 40051
     ### konveyor-operator is no longer part of the index 11192021
-    mirrored_operator_list: "group-sync-operator,keycloak-operator,koku-metrics-operator,konveyor-forklift-operator,namespace-configuration-operator,prometheus,prometheus-exporter-operator,splunk,argocd-operator,argocd-operator-helm,jupyterlab-operator"
+    mirrored_operator_list: 
+      - name: group-sync-operator
+        start_version: ''
+      - name: keycloak-operator
+        start_version: ''
+      - name: koku-metrics-operator
+        start_version: ''
+      - name: konveyor-forklift-operator
+        start_version: ''
+      - name: namespace-configuration-operator
+        start_version: ''
+      - name: prometheus
+        start_version: ''
+      - name: prometheus-exporter-operator
+        start_version: ''
+      - name: splunk
+        start_version: ''
+      - name: argocd-operator
+        start_version: ''
+      - name: argocd-operator-helm
+        start_version: ''
+      - name: jupyterlab-operator
+        start_version: ''
     mirror: "true"
+    upgrade: "false"
   jupyterlab-operator:
     source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
     container_port: '50051'
     host_port: 10051
-    mirrored_operator_list: "jupyterlab-operator"
-    mirror: "true"
+    mirrored_operator_list: 
+      - name: jupyterlab-operator
+        start_version: ''
+    mirror: "false"
+    upgrade: "false"
 
 default_operator_registry: 'registry.redhat.io'
 default_operator_registry_username: '{{ vault_default_operator_registry_username }}'
