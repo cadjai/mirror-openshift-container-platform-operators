@@ -100,32 +100,27 @@
     - name: Upload operator index to registry
       become: yes
       command: >
-        {{ oc_client.stdout }} image mirror localhost:5000/{{ custom_index_image_name[idx] }}  \
-           {{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[1] }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[2] }} \
-           --keep-manifest-list=true --insecure=true \
+        {{ oc_client.stdout }} image mirror localhost:5000/{{ item }}  \
+           {{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ item }} \
+           --keep-manifest-list=true \
+           --insecure=true \
            -a {{ registry_auth_config }}
-      loop: "{{ index_tags.results }}"
-      loop_control:
-        index_var: idx
+      loop: "{{ custom_index_image_name }}"
       when:
         - oc_client is defined
         - oc_client != ''
-        - item.skipped is undefined
-        - item.stdout is defined
       register: operator_indices_uploaded
 
     - name: Upload operator index to registry
       become: yes
       command: >
-        skopeo copy docker://localhost:5000/{{ custom_index_image_name[idx] }}  \
-           docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[1] }}/{{ operator_registries_to_mirror[item.item.key].source.split('/')[2] }} \
-           --tls-verify=false --all --authfile={{ registry_auth_config }}
-      loop: "{{ index_tags.results }}"
-      loop_control:
-        index_var: idx
+        skopeo copy docker://localhost:5000/{{ item }}  \
+           docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ item }} \
+           --tls-verify=false \
+           --all \
+           --authfile={{ registry_auth_config }}
+      loop: "{{ custom_index_image_name }}"
       when:
         - not oc_client is defined or oc_client == ""
-        - item.skipped is undefined
-        - item.stdout is defined
       register: operator_indices_uploaded
 
