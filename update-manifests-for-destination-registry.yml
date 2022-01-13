@@ -23,7 +23,7 @@
             state: directory
             mode: 0755
           with_dict:
-            - "{{ operator_registres_to_mirror }}"
+            - "{{ operator_registries_to_mirror }}"
           when:
             - item.key is defined and item.key != ""
             - item.value.mirror is defined and item.value.mirror | bool
@@ -100,7 +100,7 @@
             dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-arvin.yaml"
             force: yes
           with_dict:
-            - "{{ operator_registres_to_mirror }}"
+            - "{{ operator_registries_to_mirror }}"
           when:
             - item.key is defined and item.key != ""
             - item.value.mirror is defined and item.value.mirror | bool
@@ -112,7 +112,7 @@
             dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-artifactory.yaml"
             force: yes
           with_dict:
-            - "{{ operator_registres_to_mirror }}"
+            - "{{ operator_registries_to_mirror }}"
           when:
             - item.key is defined and item.key != ""
             - item.value.mirror is defined and item.value.mirror | bool
@@ -125,7 +125,7 @@
             replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
             backup: yes
           with_dict:
-            - "{{ operator_registres_to_mirror }}"
+            - "{{ operator_registries_to_mirror }}"
           when:
             - item.key is defined and item.key != ""
             - item.value.mirror is defined and item.value.mirror | bool
@@ -138,7 +138,7 @@
             replace: '{{ "custom-" }}{{ item.key }}'
             backup: yes
           with_dict:
-            - "{{ operator_registres_to_mirror }}"
+            - "{{ operator_registries_to_mirror }}"
           when:
             - item.key is defined and item.key != ""
             - item.value.mirror is defined and item.value.mirror | bool
@@ -151,7 +151,7 @@
             replace: '{{ (item.key | replace("-", " ") | title) }}'
             backup: yes
           with_dict:
-            - "{{ operator_registres_to_mirror }}"
+            - "{{ operator_registries_to_mirror }}"
           when:
             - item.key is defined and item.key != ""
             - item.value.mirror is defined and item.value.mirror | bool
