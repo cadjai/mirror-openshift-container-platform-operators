@@ -84,7 +84,7 @@
           replace:
             path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
             regexp: 'olm-image-content-source'
-            replace: '{{ (item.value.source.split("/")[2]).split(":")[0] }}'
+            replace: '{{ item.key }}{{ "-index" }}'
             backup: yes
           with_dict:
             - "{{ operator_registries_to_mirror }}"
