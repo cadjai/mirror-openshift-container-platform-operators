@@ -46,3 +46,8 @@
         - "{{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest-{{ today_date }}"
         - "{{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest"
 
+    - name: '{{ ansible_name_module }} | podman:save | save OpenShift Update Service graph data image'
+      shell: >
+        podman save -o {{ dir_bundle_location }}/graph-data-latest-image-{{ today_date }}.tar \
+          {{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest-{{ today_date }}
+      register: graph_data_container_saved
