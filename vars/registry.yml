@@ -201,6 +201,15 @@ operator_registries_to_mirror:
         start_version: ''
     mirror: "false"
     upgrade: "false"
+  cincinnati-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    container_port: '50051'
+    host_port: 50051
+    mirrored_operator_list: 
+      - name: "cincinnati-operator"
+        start_version: ''
+    mirror: "false"
+    upgrade: "false"
 
 default_operator_registry: 'registry.redhat.io'
 default_operator_registry_username: '{{ vault_default_operator_registry_username }}'
