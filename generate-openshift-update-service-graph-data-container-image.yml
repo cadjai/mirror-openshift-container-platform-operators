@@ -1,0 +1,48 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- name: ' Konductor | Provision UPI Infra | generate-openshift-update-service-graph-data-container-image.yml' 
+  hosts: localhost 
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/registry.yml'
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    module: "mirror-openshift-update-service-graph-data-container"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+
+  pre_tasks:
+    - name: '{{ ansible_name_module }} | Ensure podman is installed on host'
+      shell: >
+        which podman
+      ignore_errors: yes
+      register: podman_binary
+
+    - assert:
+        that:
+          - podman_binary is defined
+          - podman_binary.rc is defined 
+          - podman_binary.rc == 0
+          - podman_binary.stdout is defined 
+        msg: "Podman is required on this host before running this "
+
+  tasks:
+    - name: '{{ ansible_name_module }} | Set Tomorrow Date fact'
+      set_fact:
+        today_date: "{{ lookup('pipe', ' date +%Y%m%d') }}"
+
+    - name: '{{ ansible_name_module }} | build OpenShift Update Service graph data Container'
+      shell: >
+        podman build -f ./Containerfile -t {{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest-{{ today_date }}
+      register: graph_data_container_built
+
+    - name: '{{ ansible_name_module }} | tag OpenShift Update Service graph data Container'
+      shell: >
+        podman tag {{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest-{{ today_date }} {{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest
+      register: graph_data_container_tagged
+
+    - name: '{{ ansible_name_module }} | push OpenShift Update Service graph data Container'
+      shell: >
+        podman push --authfile {{ registry_auth_config }} {{ item }} 
+      loop:
+        - "{{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest-{{ today_date }}"
+        - "{{ registry_host_fqdn }}/{{ local_repository }}/openshift/graph-data:latest"
+
