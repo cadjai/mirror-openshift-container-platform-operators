@@ -407,6 +407,16 @@
         - not item.value.upgrade is defined or not item.value.upgrade | bool
 
     #######################This is to fix some discrepancies seen after images have been mirrored ############################
+    ###########################
+    #  When a manifest is part of a list and the manifest is mirrored by itself there seems to be a disconnect
+    #  between what is in the mapping file and what is mirrored. So it appears that for cases like that we
+    #  need to do a second pass and mirror all manifest is the list.
+    #  As an example look at openshift4/ose-kube-rbac-proxy@sha256:6d0286b8a8f6f3cd9d6cd8319400acf27b70fbb52df5808ec6fe2d9849be7d8c
+    #  it is part of a list and on the file system the only image left using the Arvin method is
+    #  ca290fbe3a0de7ac7a513322d466fd26124c56851c027430a8c1dbe2b30f21f6 which does not match the manifest above
+    #  when you attempt to push using the digest in the mapping file you get an error saying unknown manifest
+    #  That is what this second pass is fixing
+    #  #####################################################################################################
     - name: '{{ ansible_name_module }} | shell:cat | load mapping.txt file'
       shell: cat {{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt
       with_dict:
