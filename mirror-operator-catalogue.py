@@ -346,10 +346,10 @@ def GetImageListToMirror(operators, db_path):
       if len(result) == 1:
         channel = result[0][0]
     
-      cmd = "select operatorbundle_name from channel_entry where package_name like '" + operator.name + "' and channel_name like '" + channel + "' and operatorbundle_name like '%" + version + "%';"
-      result = cur.execute(cmd).fetchall()
+        cmd = "select operatorbundle_name from channel_entry where package_name like '" + operator.name + "' and channel_name like '" + channel + "' and operatorbundle_name like '%" + version + "%';"
+        result = cur.execute(cmd).fetchall()
 
-      if len(result) >= 1:
+      if len(result) == 1:
         bundle_name = result[0][0]
 
       bundle = OperatorBundle(bundle_name, version)
@@ -363,6 +363,7 @@ def GetImageListToMirror(operators, db_path):
           bundle.related_images.append(image[0])
       
       # Get bundle images for operator bundle
+      #cmd = "select bundlepath from operatorbundle where (name like '%" +  operator.name + "%' or bundlepath like '%" +  operator.name + "%') and version='" + version + "';"
       cmd = "select bundlepath from operatorbundle where (name like '%" +  operator.name + "%' or bundlepath like '%" +  operator.name + "%') and version='" + str(version) + "';"
 
       result = cur.execute(cmd).fetchall()

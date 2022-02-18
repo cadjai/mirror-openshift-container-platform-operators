@@ -196,7 +196,7 @@
         mode: '0755'
       with_items:
         - mirror-operator-catalogue.py
-        - openshift-disconnected-operators/upgradepath.py
+        - upgradepath.py
 
     - name: '{{ ansible_name_module }} | file | create operator-yaml-file '
       file:
