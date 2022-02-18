@@ -98,10 +98,9 @@
 
     - name: '{{ ansible_name_module }} | Generate list of operator for each index'
       when:
-        - pull_all is defined
-        - pull_all | bool 
+        - generate_operator_list is defined
+        - generate_operator_list | bool 
         - item.key is defined and item.key != ""
-        - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
         - item.value.host_port is defined and item.value.host_port|int > 0
         - item.value.container_port is defined and item.value.container_port|int > 0
@@ -205,13 +204,11 @@
         state: touch
         mode: '0655'
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | Add Markers to mark operators'
@@ -219,13 +216,11 @@
         path: "{{ dir_bundle_staging }}/{{ item.key }}{{ '.yaml' }}"
         line: "# BEGIN ANSIBLE MANAGED BLOCK Adding operators Block"
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | Add Markers to mark operators'
@@ -233,13 +228,11 @@
         path: "{{ dir_bundle_staging }}/{{ item.key }}{{ '.yaml' }}"
         line: "# END ANSIBLE MANAGED BLOCK Adding operators Block"
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | Add operators block'
@@ -249,15 +242,14 @@
         state: present
         block: |
           operators:
-            {{ item.value.mirrored_operator_list | to_nice_yaml | indent(2, false) }}
+            name: {{ item.key }}
+            start_version: {{ item.value.start_version }}
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | Remove End Markers'
@@ -266,13 +258,11 @@
         line: "# END ANSIBLE MANAGED BLOCK Adding operators Block"
         state: absent
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | Remove Begin  Markers'
@@ -281,13 +271,11 @@
         line: "# BEGIN ANSIBLE MANAGED BLOCK Adding operators Block"
         state: absent
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | Remove empty start_version tags'
@@ -296,37 +284,31 @@
         regexp: "start_version: ''"
         state: absent
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | shell:echo | create a line separated list of the items to mirror 1 of 2'
-      shell: echo {{ item.value.mirrored_operator_list | map(attribute='name') | list | join(',') }} > {{ dir_bundle_staging }}/{{ item.key }}
+      shell: echo {{ item.key }} > {{ dir_bundle_staging }}/{{ item.key }}
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - not item.value.upgrade is defined or not item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | shell:sed | create a line separated list of the items to mirror 2 of 2'
       shell: sed -i $'s/,/\\\n/g' {{ dir_bundle_staging }}/{{ item.key }}
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
-        - not pull_all is defined or not pull_all | bool
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - not item.value.upgrade is defined or not item.value.upgrade | bool
 
     - name: '{{ ansible_name_module }} | file:directory | ensure ouput directory exits for each of indices being processed'
@@ -335,12 +317,11 @@
         state: directory
         mode: 0755
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
 
     - name: Mirror operators using Arvin's python script
       script: >
@@ -366,12 +347,11 @@
       environment:
         - PYTHONPATH: "{{ dir_bundle_staging }}/scripts/"
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - item.value.upgrade is defined and item.value.upgrade | bool
 
     - name: Mirror operators using Arvin's python script
@@ -391,19 +371,18 @@
               --ocp-version={{ ocp_release_version }} \
               --output={{ item.key }}-publish \
               --operator-channel={{ item.value.source.split(':')[1] }} \
-              --operator-file={{ dir_bundle_staging }}/{{ item.key }}
+              --operator-list={{ item.key }}
       args:
         executable: python3
         chdir: "{{ dir_bundle_staging }}/scripts/"
       environment:
         - PYTHONPATH: "{{ dir_bundle_staging }}/scripts/"
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.mirrored_operator_list is defined and item.value.mirrored_operator_list | length > 0
         - not item.value.upgrade is defined or not item.value.upgrade | bool
 
     #######################This is to fix some discrepancies seen after images have been mirrored ############################
@@ -420,7 +399,7 @@
     - name: '{{ ansible_name_module }} | shell:cat | load mapping.txt file'
       shell: cat {{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
@@ -460,7 +439,7 @@
             dest: "{{ registry_container_dir }}"
             force: yes
           with_dict:
-            - "{{ operator_registries_to_mirror }}"
+            - "{{ operators_to_mirror }}"
           when:
             - item.key is defined and item.key != ""
             - item.value.mirror is defined and item.value.mirror | bool

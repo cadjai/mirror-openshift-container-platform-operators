@@ -5,7 +5,8 @@ ansible_name: " {{ name_vendor }} | Konductor | Infra Automation"
 ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
 openshift_client_binary: '/usr/bin/oc'
 opm_binary: '/usr/bin/opm'
-root_drive: '/data'
+root_drive: '/claudedatavol'
+#root_drive: '/data'
 temp_dir: '{{ root_drive }}'
 opm_binary_download_url: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'
 opm_binary_downloaded_artifact: 'opm-linux.tar.gz'
@@ -25,191 +26,266 @@ operator_local_repository: 'openshift4/custom-operators'
 openshift_cli: '/usr/bin/oc'
 ocp_release_version: "4.7.4"
 
+generate_operator_list: 'false'
+operators_to_mirror:
+  3scale-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  advanced-cluster-management:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  amq-streams:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  businessautomation-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  cincinnati-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  cluster-kube-descheduler-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  cluster-logging:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  clusterresourceoverride:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  codeready-workspaces:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  compliance-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  container-security-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  costmanagement-metrics-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  elasticsearch-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  file-integrity-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  jaeger-product:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  kiali-ossm:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  local-storage-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  nfd:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  ocs-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  performance-addon-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  ptp-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  rhacs-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  rhsso-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  serverless-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  servicemeshoperator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  web-terminal:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  mtc-operator:
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  group-sync-operator:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  keycloak-operator:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  namespace-configuration-operator:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  argocd-operator:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  argocd-operator-helm:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  prometheus:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  prometheus-exporter-operator:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  jupyterlab-operator:
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  anchore-engine:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  elasticsearch-eck-operator-certified:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  falco-certified:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  gitlab-runner-operator:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  gpu-operator-certified:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  nginx-ingress-operator:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  openshiftartifactoryha-operator:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  openshiftpipeline-operator:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "true"
+    upgrade: "false"
+  openshiftxray-operator:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  prisma-cloud-compute-console-operator.v2.0.1:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  redhat-marketplace-operator:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  rocketchat-operator-certified:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+  sysdig-certified:
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    start_version: ''
+    mirror: "false"
+    upgrade: "false"
+
 operator_registries_to_mirror:
   redhat-operators:
     source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
     container_port: '50051'
     host_port: 50051
-    mirrored_operator_list: 
-      - name: 3scale-operator
-        start_version: ''
-      - name: advanced-cluster-management
-        start_version: ''
-      - name: amq-streams
-        start_version: ''
-      - name: businessautomation-operator
-        start_version: ''
-      - name: cluster-kube-descheduler-operator
-        start_version: ''
-      - name: cluster-logging
-        start_version: ''
-      - name: clusterresourceoverride
-        start_version: ''
-      - name: codeready-workspaces
-        start_version: ''
-      - name: compliance-operator
-        start_version: ''
-      - name: container-security-operator
-        start_version: ''
-      - name: elasticsearch-operator
-        start_version: ''
-      - name: file-integrity-operator
-        start_version: ''
-      - name: jaeger-product
-        start_version: ''
-      - name: kiali-ossm
-        start_version: ''
-      - name: local-storage-operator
-        start_version: ''
-      - name: nfd
-        start_version: ''
-      - name: ocs-operator
-        start_version: ''
-      - name: ptp-operator
-        start_version: ''
-      - name: rhsso-operator
-        start_version: ''
-      - name: serverless-operator
-        start_version: ''
-      - name: servicemeshoperator
-        start_version: ''
-      - name: web-terminal
-        start_version: ''
-      - name: mtc-operator
-        start_version: ''
-      - name: costmanagement-metrics-operator
-        start_version: ''
-      - name: cincinnati-operator
-        start_version: ''
-      - name: performance-addon-operator
-        start_version: ''
-      - name: rhacs-operator
-        start_version: ''
-    mirror: "true"
-    upgrade: "false"
   community-operators:
     source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
     container_port: 50051
     host_port: 40051
-    mirrored_operator_list: 
-      - name: group-sync-operator
-        start_version: ''
-      - name: keycloak-operator
-        start_version: ''
-      - name: koku-metrics-operator
-        start_version: ''
-      - name: konveyor-forklift-operator
-        start_version: ''
-      - name: konveyor-operator
-        start_version: ''
-      - name: namespace-configuration-operator
-        start_version: ''
-      - name: prometheus
-        start_version: ''
-      - name: prometheus-exporter-operator
-        start_version: ''
-      - name: splunk
-        start_version: ''
-      - name: argocd-operator
-        start_version: ''
-      - name: argocd-operator-helm
-        start_version: ''
-      - name: jupyterlab-operator"
-        start_version: ''
-    mirror: "false"
-    upgrade: "false"
   market-operators:
     source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.7'
     container_port: 50051
     host_port: 30051
-    mirrored_operator_list: 
-    mirror: "false"
-    upgrade: "false"
   certified-operators:
     source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
     container_port: 50051
     host_port: 20051
-    mirrored_operator_list: 
-      - name: anchore-engine
-        start_version: ''
-      - name: elasticsearch-eck-operator-certified
-        start_version: ''
-      - name: falco-certified
-        start_version: ''
-      - name: gitlab-runner-operator
-        start_version: ''
-      - name: gpu-operator-certified
-        start_version: ''
-      - name: nginx-ingress-operator
-        start_version: ''
-      - name: node-red-operator-certified
-        start_version: ''
-      - name: openshiftartifactoryha-operator
-        start_version: ''
-      - name: openshiftpipeline-operator
-        start_version: ''
-      - name: openshiftxray-operator
-        start_version: ''
-      - name: prisma-cloud-compute-console-operator.v2.0.1
-        start_version: ''
-      - name: redhat-marketplace-operator
-        start_version: ''
-      - name: rocketchat-operator-certified
-        start_version: ''
-      - name: splunk-certified
-        start_version: ''
-      - name: sysdig-certified
-        start_version: ''
-    mirror: "false"
-    upgrade: "false"
-  community-operators:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.8'
-    container_port: 50051
-    host_port: 40051
-    ### konveyor-operator is no longer part of the index 11192021
-    mirrored_operator_list: 
-      - name: group-sync-operator
-        start_version: ''
-      - name: keycloak-operator
-        start_version: ''
-      - name: koku-metrics-operator
-        start_version: ''
-      - name: konveyor-forklift-operator
-        start_version: ''
-      - name: namespace-configuration-operator
-        start_version: ''
-      - name: prometheus
-        start_version: ''
-      - name: prometheus-exporter-operator
-        start_version: ''
-      - name: splunk
-        start_version: ''
-      - name: argocd-operator
-        start_version: ''
-      - name: argocd-operator-helm
-        start_version: ''
-      - name: jupyterlab-operator
-        start_version: ''
-    mirror: "true"
-    upgrade: "false"
-  jupyterlab-operator:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-    container_port: '50051'
-    host_port: 10051
-    mirrored_operator_list: 
-      - name: jupyterlab-operator
-        start_version: ''
-    mirror: "false"
-    upgrade: "false"
-  cincinnati-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-    container_port: '50051'
-    host_port: 50051
-    mirrored_operator_list: 
-      - name: "cincinnati-operator"
-        start_version: ''
-    mirror: "false"
-    upgrade: "false"
 
 default_operator_registry: 'registry.redhat.io'
 default_operator_registry_username: '{{ vault_default_operator_registry_username }}'
