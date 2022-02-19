@@ -69,7 +69,7 @@
           -d {{ registry_host_fqdn }}/{{ operator_local_repository }} \
           -m {{ dir_bundle_staging }}/{{ item.key }}-publish/mapping.txt
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
@@ -82,7 +82,7 @@
       args:
         warn: no
       with_dict:
-        - "{{ operator_registries_to_mirror }}"
+        - "{{ operators_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
