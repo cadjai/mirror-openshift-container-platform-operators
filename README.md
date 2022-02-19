@@ -32,6 +32,8 @@ grpcurl -plaintext localhost:30051 api.Registry/ListPackages > /tmp/operators-li
 ```
 The generated files contain the name of the operators and you can pick the ones you want for each of the operator index.
 
+> **:WARNING: If while running the mirror-operators.yml playbook you run into "A signature was required but no signatures exists" or "Unable to pull signed images " error, it is due to the container policy on the host (see /etc/containers/policy.json). You can either add the missing signature to the sigstore if you can get it or disable security for that repository using the "'type': 'insecureAcceptAnything'".**
+
 
 ## Requirements
 
