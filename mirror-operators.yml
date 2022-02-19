@@ -150,7 +150,6 @@
         - "{{ operator_registries_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
-        - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
         - item.value.image_registry is defined and item.value.image_registry != ""
 
