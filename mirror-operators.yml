@@ -290,26 +290,6 @@
         - item.value.source is defined and item.value.source != ""
         - item.value.upgrade is defined and item.value.upgrade | bool
 
-    - name: '{{ ansible_name_module }} | shell:echo | create a line separated list of the items to mirror 1 of 2'
-      shell: echo {{ item.key }} > {{ dir_bundle_staging }}/{{ item.key }}
-      with_dict:
-        - "{{ operators_to_mirror }}"
-      when:
-        - item.key is defined and item.key != ""
-        - item.value.mirror is defined and item.value.mirror | bool
-        - item.value.source is defined and item.value.source != ""
-        - not item.value.upgrade is defined or not item.value.upgrade | bool
-
-    - name: '{{ ansible_name_module }} | shell:sed | create a line separated list of the items to mirror 2 of 2'
-      shell: sed -i $'s/,/\\\n/g' {{ dir_bundle_staging }}/{{ item.key }}
-      with_dict:
-        - "{{ operators_to_mirror }}"
-      when:
-        - item.key is defined and item.key != ""
-        - item.value.mirror is defined and item.value.mirror | bool
-        - item.value.source is defined and item.value.source != ""
-        - not item.value.upgrade is defined or not item.value.upgrade | bool
-
     - name: '{{ ansible_name_module }} | file:directory | ensure ouput directory exits for each of indices being processed'
       file:
         path: "{{ dir_bundle_staging }}/{{ item.key }}-publish"
