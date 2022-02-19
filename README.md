@@ -12,6 +12,10 @@ If you need all versions of operand images, you can either use the [role](https:
 
 To help ready the file system of the pulled images from the above step (using the Arvin script) so that the images can easily be pushed to the destination registry, the second script from [Alex Flom](https://github.com/RedHatGov/openshift-disconnected-operators/blob/master/container/upload.sh) is used to fix the v2 registry file system layout to help push the content into the destination registry.
 
+Originally the playbook pulls operators coming from one index and uses that index for a big bang approach, which simplified the amount of operator indices to track and deploy. 
+However, the downside to this is in maintaining and updating operators. When a single operator or a subset of the operators in the index need to be updated, that usually ends up affecting other operators that are part of that index but are not being updated at the moment. 
+To solve this, we are switching the approach used by dedicating an index to each operator so that their lifecycle can be maintained separately/independently. The main branch now uses that approach where each of the operators included in the list has its own index named after the operator being mirrored. If for any reason you need to still use the original approach of including all operators coming from the same index with that index, you can checkout the operators-by-index-bundle branch. 
+
 If you need to get an updated list of operators different from the list for the various keys in operator_registries_to_mirror, use the following sample commands:
 ```
 podman run -d --name operator_collector_redhat-operators -p 50051:50051 registry.redhat.io/redhat/redhat-operator-index:v4.7
