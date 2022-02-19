@@ -174,7 +174,7 @@
 
     - name: '{{ ansible_name_module }} | podman:run | Start registry container '
       command: podman run -d --name {{ registry_container_name }} \
-        -p 5000:5000 -v {{ registry_container_dir }}:/var/lib/registry:z \
+        -p 5000:5000 -v {{ registry_container_dir }}:/var/lib/registry \
           {{ registry_container_image }}
 
     - name: '{{ ansible_name_module }} | copy | copy content template files to staging location '
@@ -195,8 +195,8 @@
         force: yes
         mode: '0755'
       with_items:
-        - mirror-operator-catalogue.py
-        - upgradepath.py
+        - openshift-disconnected-operators/mirror-operator-catalogue.py
+        - openshift-disconnected-operators/upgradepath.py
 
     - name: '{{ ansible_name_module }} | file | create operator-yaml-file '
       file:
