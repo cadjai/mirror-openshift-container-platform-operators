@@ -431,6 +431,5 @@
               -f {{ dir_bundle_location }}/{{ bundle_file_name }} \
               -C {{ registry_container_dir }} .
           args:
-            creates: "{{ dir_bundle_location }}/{{ bundle_file_name }}"
             warn: false
             chdir: "{{ registry_container_dir }}/"
