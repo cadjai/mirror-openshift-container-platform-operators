@@ -10,7 +10,7 @@
     - 'vars/registry.yml'
 
   pre_tasks:
-    - name: Install required depencies 
+    - name: Install required dependencies 
       become: yes
       yum:
         name:
