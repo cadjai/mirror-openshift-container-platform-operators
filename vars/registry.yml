@@ -240,7 +240,7 @@ operators_to_mirror:
   openshiftpipeline-operator:
     source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
     start_version: ''
-    mirror: "true"
+    mirror: "false"
     upgrade: "false"
   openshiftxray-operator:
     source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
