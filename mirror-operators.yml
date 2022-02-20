@@ -396,13 +396,19 @@
         - item.stdout_lines | length > 0
       register: images_mirrored_list_created
 
+    ### Adding the failed_when condition to not fail the run because of an issue related to 
+    # some images not be available for pull (e.g. egistry.connect.redhat.com/jfrog/pipelines-vault-init@sha256:fefea387baefffaf3c3636e61f39fb5ea1fb09119af34a944f522341d50c6a1f is causing a failure and  need to be investigated further)
     - name: '{{ ansible_name_module }} | oc image mirror | mirror images using the mapping files'
       command: >
         oc image mirror {{ item.split('=')[0] }} \
            localhost:5000/{{ ((item.split('=')[0]).split('/')[1:] | join('/')).split('@sha256')[0] }} \
-           --keep-manifest-list=true --insecure=true \
+           --keep-manifest-list=true \
+           --insecure=true \
            -a {{ operator_registry_pull_secret_file }}
       loop: "{{ mirrored_images_list }}"
+      failed_when:
+        - images_mirrored_2nd_pass.rc >= 1
+        - "'unable to retrieve source image' not in images_mirrored_2nd_pass.stderr"
       register: images_mirrored_2nd_pass
 
     ####################### End Fix ############################
