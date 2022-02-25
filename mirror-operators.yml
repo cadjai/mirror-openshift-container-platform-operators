@@ -5,6 +5,10 @@
     ansible_python_interpreter: /usr/bin/python3.6
     module: "mirror-operators"
     ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+    selinux_py_pkgs:
+      - libselinux
+      - policycoreutils
+      - libsemanage
   vars_files:
     - 'vars/vault.yml'
     - 'vars/registry.yml'
@@ -14,8 +18,22 @@
       become: yes
       yum:
         name:
-          - python3-libselinux 
+          - python3-libselinux
+          - python3-policycoreutils
+          - python3-libsemanage
         state: present
+    - name: Set Selinux Context flag on Container Drectory  mount point
+      become: yes
+      sefcontext:
+        target: "{{ registry_container_dir }}(/.*)?"
+        setype: "{{ container_context_label | default('container_file_t', false) }}"
+        state: present
+      register: fcontext_set
+
+    - name: Apply Fcontext set above
+      become: yes
+      command: restorecon -irv {{ registry_container_dir }}
+      register: fcontext_applied
 
     - name: '{{ ansible_name_module }} | pip install | install required module'
       pip:
