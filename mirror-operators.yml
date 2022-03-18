@@ -205,6 +205,19 @@
         - openshift-disconnected-operators/image-content-source-template
         - openshift-disconnected-operators/catalog-source-template
 
+    - name: '{{ ansible_name_module }} | file | create operator-yaml-file '
+      file:
+        path: "{{ dir_bundle_staging }}/{{ item.key }}{{ '.yaml' }}"
+        state: touch
+        mode: '0655'
+      with_dict:
+        - "{{ operators_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.mirror is defined and item.value.mirror | bool
+        - item.value.source is defined and item.value.source != ""
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
+
     - name: '{{ ansible_name_module }} | copy | copy python modules into the script directory for execution '
       copy:
         src: "{{ item }}"
@@ -212,7 +225,7 @@
         force: yes
         mode: '0755'
       with_items:
-        - openshift-disconnected-operators/mirror-operator-catalogue.py
+        - mirror-operator-catalogue.py
         - openshift-disconnected-operators/upgradepath.py
 
     - name: '{{ ansible_name_module }} | file | create operator-yaml-file '
@@ -227,6 +240,7 @@
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
         - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: '{{ ansible_name_module }} | Add Markers to mark operators'
       lineinfile:
@@ -238,7 +252,7 @@
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: '{{ ansible_name_module }} | Add Markers to mark operators'
       lineinfile:
@@ -250,7 +264,7 @@
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: '{{ ansible_name_module }} | Add operators block'
       blockinfile:
@@ -259,15 +273,15 @@
         state: present
         block: |
           operators:
-            name: {{ item.key }}
-            start_version: {{ item.value.start_version }}
+            - name: {{ item.key }}
+              start_version: {{ item.value.start_version }}
       with_dict:
         - "{{ operators_to_mirror }}"
       when:
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: '{{ ansible_name_module }} | Remove End Markers'
       lineinfile:
@@ -280,7 +294,7 @@
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: '{{ ansible_name_module }} | Remove Begin  Markers'
       lineinfile:
@@ -293,7 +307,7 @@
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: '{{ ansible_name_module }} | Remove empty start_version tags'
       lineinfile:
@@ -306,7 +320,7 @@
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: '{{ ansible_name_module }} | file:directory | ensure ouput directory exits for each of indices being processed'
       file:
@@ -349,7 +363,7 @@
         - item.key is defined and item.key != ""
         - item.value.mirror is defined and item.value.mirror | bool
         - item.value.source is defined and item.value.source != ""
-        - item.value.upgrade is defined and item.value.upgrade | bool
+        - (item.value.upgrade is defined and item.value.upgrade | bool) or (item.value.use_yaml is defined and item.value.use_yaml | bool)
 
     - name: Mirror operators using Arvin's python script
       script: >
