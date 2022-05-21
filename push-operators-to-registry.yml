@@ -78,7 +78,7 @@
 
     - name: Retreive custom index tag
       shell: >
-        curl -v http://localhost:5000/v2/custom-{{ (item.value.source.split('/')[2]).split(':')[0] }}/tags/list | jq .tags[]
+        curl -v http://localhost:5000/v2/{{ mirrored_index_prefix }}{{ (item.value.source.split('/')[2]).split(':')[0] }}/tags/list | jq .tags[]
       args:
         warn: no
       with_dict:
@@ -91,7 +91,7 @@
 
     - name: Set custom index image name
       set_fact:
-        custom_index_image_name: "{{ custom_index_image_name | default([]) + ['custom-' + item.item.key + '-index:' + item.stdout | from_json] }}"
+        custom_index_image_name: "{{ custom_index_image_name | default([]) + [mirrored_index_prefix + item.item.key + '-index:' + item.stdout | from_json] }}"
       loop: "{{ index_tags.results }}"
       when:
         - item.skipped is undefined

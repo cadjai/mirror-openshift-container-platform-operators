@@ -182,6 +182,11 @@ Optional:
 Default: 'true'   
 The flag to indicate if the bundle should be unpacked before being pushed to the destination registry.   
 
+### mirrored_index_prefix 
+Optional:   
+Default: 'custom-'   
+The prefix to use to name the index dedicated to the operator. If not needed set this to empty string.   
+
 ### operator_registries_to_mirror
 Optional:   
 Default: (see structure below)   

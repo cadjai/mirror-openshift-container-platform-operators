@@ -72,7 +72,6 @@
             path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
             regexp: 'localhost:5000'
             replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
-            backup: yes
           with_dict:
             - "{{ operators_to_mirror }}"
           when:
@@ -85,7 +84,6 @@
             path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/olm-icsp-registry.yaml"
             regexp: 'olm-image-content-source'
             replace: '{{ item.key }}{{ "-index" }}'
-            backup: yes
           with_dict:
             - "{{ operators_to_mirror }}"
           when:
@@ -97,7 +95,7 @@
         - name: '{{ ansible_name_module }} | copy | copy rh-catalog-source manifest file '
           copy:
             src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/rh-catalog-source.yaml"
-            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-arvin.yaml"
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source.yaml"
             force: yes
           with_dict:
             - "{{ operators_to_mirror }}"
@@ -109,7 +107,7 @@
         - name: '{{ ansible_name_module }} | copy | copy rh-catalog-source manifest file '
           copy:
             src: "{{ dir_bundle_staging }}/{{ item.key }}-publish/rh-catalog-source.yaml"
-            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-artifactory.yaml"
+            dest: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-registry.yaml"
             force: yes
           with_dict:
             - "{{ operators_to_mirror }}"
@@ -120,10 +118,9 @@
 
         - name: '{{ ansible_name_module }} | replace | destination repository '
           replace:
-            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-artifactory.yaml"
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-registry.yaml"
             regexp: 'localhost:5000'
             replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
-            backup: yes
           with_dict:
             - "{{ operators_to_mirror }}"
           when:
@@ -133,10 +130,9 @@
 
         - name: '{{ ansible_name_module }} | replace | CatalogSource name '
           replace:
-            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-artifactory.yaml"
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-registry.yaml"
             regexp: 'custom-redhat-operators'
-            replace: '{{ "custom-" }}{{ item.key }}'
-            backup: yes
+            replace: '{{ mirrored_index_prefix }}{{ item.key }}'
           with_dict:
             - "{{ operators_to_mirror }}"
           when:
@@ -146,10 +142,9 @@
 
         - name: '{{ ansible_name_module }} | replace | displayName name '
           replace:
-            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-artifactory.yaml"
+            path: "{{ playbook_dir }}/{{ item.key }}-index-manifests/rh-catalog-source-registry.yaml"
             regexp: 'Red Hat Operators'
             replace: '{{ (item.key | replace("-", " ") | title) }}'
-            backup: yes
           with_dict:
             - "{{ operators_to_mirror }}"
           when:

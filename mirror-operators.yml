@@ -314,7 +314,7 @@
               --operator-image-name={{ item.key }} \
               --operator-catalog-image-url={{ item.value.source.split(':')[0] }}  \
               --opm-path={{ opm_binary }} \
-              --custom-operator-catalog-name=custom-{{ item.key }} \
+              --custom-operator-catalog-name={{ mirrored_index_prefix }}{{ item.key }} \
               --oc-cli-path={{ openshift_cli }} \
               --ocp-version={{ ocp_release_version }} \
               --output={{ item.key }}-publish \
@@ -345,7 +345,7 @@
               --operator-image-name={{ item.key }} \
               --operator-catalog-image-url={{ item.value.source.split(':')[0] }}  \
               --opm-path={{ opm_binary }} \
-              --custom-operator-catalog-name=custom-{{ item.key }} \
+              --custom-operator-catalog-name={{ mirrored_index_prefix }}{{ item.key }} \
               --oc-cli-path={{ openshift_cli }} \
               --ocp-version={{ ocp_release_version }} \
               --output={{ item.key }}-publish \
