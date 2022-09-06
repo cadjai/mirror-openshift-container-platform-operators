@@ -1,0 +1,106 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- name: ' Konductor | Provision UPI Infra | push-ossm-v1-schema-issue-workaround-operator-to-registry.yml'
+  become: true
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  vars_files:
+  vars:
+    module: "bundle-operators"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+    root_drive: '/data'
+    temp_dir: '{{ root_drive }}'
+    ossm_index_source: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    ossm_catalog_name: 'redhat-operator-index-servicemeshoperator'
+    ossm_manifest_file: 'files/ossm-v1-issue-workaround/image_manifest.txt'
+    operator_bundle_file_location: "{{ root_drive }}/bundles/artifactory/ossm-operator-bundle-v410.tar.xz"
+    operator_dir_bundle_staging: "{{ root_drive }}/registry"
+    registry_container_dir: "{{ root_drive }}/registry"
+    registry_container_image: "docker.io/library/registry:2"
+    registry_container_name: "mirror-registry"
+    registry_host_fqdn: ""
+    registry_admin_username: ""
+    registry_admin_password: ""
+    operator_local_repository: "openshift4/operators-repository"
+    bundle: "true"
+    unpack_bundle: "false"
+
+
+  tasks:
+    - name: '{{ ansible_name_module }} | block | unpack bundle to controller if required'
+      when:
+        - unpack_bundle is defined
+        - unpack_bundle | bool
+      block:
+        - name: '{{ ansible_name_module }} | unarchive:xz | original operator bundle on registry '
+          unarchive:
+            src: "{{ operator_bundle_file_location }}"
+            remote_src: yes
+            dest: "{{ operator_dir_bundle_staging }}"
+            mode: 0755
+          register: op_unbundle_out
+
+    - name: '{{ ansible_name_module }} | Start a container registry if none is currently running'
+      block:
+        - name: '{{ ansible_name_module }} | podman:ps | Start registry container '
+          shell: podman ps -a | grep {{ registry_container_name }}
+          ignore_errors: yes
+          register: running_container
+
+        - name: '{{ ansible_name_module }} | podman:run | Start registry container '
+          command: podman run -d --name {{ registry_container_name }} \
+            -p 5000:5000 -v {{ operator_dir_bundle_staging }}:/var/lib/registry:z \
+             {{ registry_container_image }}
+          when:
+            - running_container is defined
+            - running_container.rc is defined
+            - running_container.rc > 0
+            - running_container.stdout is defined
+            - running_container.stdout == ''
+
+    - name: '{{ ansible_name_module }} | command | generate authfile for registry'
+      no_log: true
+      command: >
+        podman login -u {{ registry_admin_username }} -p {{ registry_admin_password }} \
+           --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/regconfig.json \
+           {{ registry_host_fqdn }}
+      register: reg_authfile_created
+
+    - name: '{{ ansible_name_module }} | set_fact |  authfile for destination registry'
+      set_fact:
+        registry_auth_config: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/regconfig.json"
+
+    - name: '{{ ansible_name_module }} | shell:cat | load image_manifest.txt file'
+      shell: cat {{ ossm_manifest_file }}
+      register: images_from_ossmmanifest
+
+    - name: '{{ ansible_name_module }} | set_fact |create list of all images mirrored'
+      set_fact:
+        ossm_images_from_manifest_list: "{{ ossm_images_from_manifest_list | default([]) + images_from_ossmmanifest.stdout_lines }}"
+      when:
+        - not images_from_ossmmanifest.skipped is defined
+        - not images_from_ossmmanifest.skip_reason is defined
+        - images_from_ossmmanifest.stdout_lines is defined
+        - images_from_ossmmanifest.stdout_lines | length > 0
+      register: images_from_manifest_list_created
+
+    - name: Upload operator images to registry using images from manifests
+      command: >
+        oc image mirror localhost:5000/{{ ((item.split('/')[1:] | join('/'))) }} \
+           {{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ (item.split('/')[1:] | join('/')).split('@sha256')[0] }} \
+           --insecure=true \
+           --keep-manifest-list=true \
+           -a {{ registry_auth_config }}
+      loop: "{{ ossm_images_from_manifest_list }}"
+      register: operator_images_uploaded
+
+    - name: Upload operator index to registry
+      become: yes
+      command: >
+        oc image mirror localhost:5000/{{ ossm_catalog_name }}:{{ ossm_index_source.split(':')[1] }} \
+        {{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ ossm_catalog_name }}:{{ ossm_index_source.split(':')[1] }} \
+           --insecure=true \
+           --filter-by-os='linux/amd64' \
+           -a {{ registry_auth_config }}
+      register: operator_index_uploaded
+

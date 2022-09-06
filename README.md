@@ -39,6 +39,10 @@ The generated files contain the name of the operators and you can pick the ones 
 > **:WARNING: If while running the mirror-operators.yml playbook you run into "A signature was required but no signatures exists" or "Unable to pull signed images " error, it is due to the container policy on the host (see /etc/containers/policy.json). You can either add the missing signature to the sigstore if you can get it or disable security for that repository using the "'type': 'insecureAcceptAnything'".**
 
 
+
+> ** Note: Due to Red Hat registry changes to V2 schema 1 [see Red HatKB](https://access.redhat.com/articles/6138332) which affects Red Hat Service Mesh operator [see issue](https://issues.redhat.com/browse/OSSM-1759) two new playbooks have beeb added to enable mirroring and push OSSM operator, This is a temporary workaround which consists in removing all affect schema 1 images from the related images mapping.**
+
+
 ## Requirements
 
 It is recommended to look at the source repositories for each of the main scripts for the requirements of that script.  
@@ -64,6 +68,21 @@ The playbooks here only require ansible to run.
    ```
    ansible-playbook push-operators-to-registry.yml --vault-id @prompt -vvv
    ``` 
+
+### Mirror OSSM operator from the Internet Connected Device using v1 schema workaround
+1. Update the playbook variables if necessary to match your environment if necessary
+2. Run the playbook using the following command   
+   ```
+   ansible-playbook mirror-ossm-v1-schema-issue-workaround.yml -vvv
+   ``` 
+
+### Push OSSM operator images to the destination registry from a Device with registry API access to the registry using v1 schema workaround
+1. Update the playbook variables to match your environment 
+2. Run the playbook using the following command   
+   ```
+   ansible-playbook push-operators-to-registry.yml --vault-id @prompt -vvv
+   ``` 
+
 
 ## Playbook Variables
 

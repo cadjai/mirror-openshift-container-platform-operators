@@ -1,0 +1,158 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- name: ' Konductor | Provision UPI Infra | mirror-ossm-v1-schema-issue-workaround.yml'
+  hosts: localhost
+  vars_files:
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    module: "bundle-operators"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+    selinux_py_pkgs:
+      - python3-libselinux
+      - python3-policycoreutils
+      - python3-libsemanage
+    root_drive: '/data'
+    temp_dir: '{{ root_drive }}'
+    ossm_index_source: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    ossm_index_registry: 'registry.redhat.io'
+    ossm_operator: 'servicemeshoperator'
+    ossm_catalog_name: 'redhat-operator-index-servicemeshoperator'
+    ossm_mapping_file: 'files/ossm-v1-issue-workaround/mapping.txt'
+    ossm_olm_file: 'files/ossm-v1-issue-workaround/olm-icsp.yaml'
+    ossm_rh_cat_file: 'files/ossm-v1-issue-workaround/rh-catalog-source.yaml'
+    ossm_orig_manifest_files: 'files/ossm-v1-issue-workaround/orig'
+    dir_bundle_staging: "{{ root_drive }}/staging"
+    dir_bundle_location: "{{ root_drive }}/bundles/artifactory"
+    operator_bundle_file_name: "ossm-operator-bundle-v410-v2.tar.xz"
+    operator_bundle_file_location: "{{ root_drive }}/bundles/artifactory/ossm-operator-bundle-v410.tar.xz"
+    registry_container_dir: "{{ root_drive }}/registry"
+    registry_container_image: "docker.io/library/registry:2"
+    registry_container_name: "mirror-registry"
+    default_operator_registry_username: ""
+    default_operator_registry_password: ""
+    opm_binary: "/usr/bin/opm"
+    bundle: "true"
+
+  pre_tasks:
+    - name: Ensure necessary and required Selinux packages are installed on hosts
+      become: yes
+      yum:
+        name: "{{ selinux_py_pkgs }}"
+        state: present
+
+    - name: Set Selinux Context flag on Container Drectory  mount point
+      become: yes
+      sefcontext:
+        target: "{{ registry_container_dir }}(/.*)?"
+        setype: "{{ container_context_label | default('container_file_t', false) }}"
+        state: present
+      register: fcontext_set
+
+    - name: Apply Fcontext set above
+      become: yes
+      command: restorecon -irv {{ registry_container_dir }}
+      register: fcontext_applied
+
+    - name: '{{ ansible_name_module }} | pip install | install required module'
+      pip:
+        name: jinja2
+
+  tasks:
+    - name: '{{ ansible_name_module }} | podman:login | Login to quay container registry'
+      no_log: true
+      command: >
+         podman login -u {{ default_operator_registry_username }} \
+         -p {{ default_operator_registry_password }} \
+         --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
+          {{ ossm_index_registry }}
+      register: authfile_created
+
+    - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'
+      no_log: true
+      command: >
+        podman login -u {{ default_operator_registry_username }} \
+          -p {{ default_operator_registry_password }} \
+          --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
+          {{ ossm_index_registry }}
+
+    - name: '{{ ansible_name_module }} | set_fact |  authfile for registry'
+      set_fact:
+        operator_registry_pull_secret_file: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json"
+
+    - name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0777
+      loop:
+        - "{{ dir_bundle_staging }}"
+        - "{{ registry_container_dir }}"
+        - "{{ dir_bundle_location }}"
+
+    - name: '{{ ansible_name_module }} | podman:run | Start registry container '
+      command: podman run -d --name {{ registry_container_name }} \
+        -p 5000:5000 -v {{ registry_container_dir }}:/var/lib/registry \
+          {{ registry_container_image }}
+
+    - name: '{{ ansible_name_module }} | opm:index:prune | prune package index '
+      block:
+        - name: '{{ ansible_name_module }} | opm:index:prune | update operator index image '
+          command: >
+            {{ opm_binary }} index prune \
+              -f {{ ossm_index_source }} \
+              -p {{ ossm_operator }} \
+              -t localhost:5000/{{ ossm_catalog_name }}:{{ ossm_index_source.split(':')[1] }}
+
+        - name: '{{ ansible_name_module }} | podman:push | push updated operator index image'
+          command: >
+            podman push --tls-verify=false localhost:5000/{{ ossm_catalog_name }}:{{ ossm_index_source.split(':')[1] }}
+
+    - name: '{{ ansible_name_module }} | shell:cat | load ossm mapping.txt file'
+      shell: cat {{ ossm_mapping_file  }}
+      register: images_from_ossmmapping
+
+    - name: '{{ ansible_name_module }} | set_fact |create list of all images mirrored'
+      set_fact:
+        ossm_mirrored_images_list: "{{ ossm_mirrored_images_list | default([]) + images_from_ossmmapping.stdout_lines }}"
+      when:
+        - not images_from_ossmmapping.skipped is defined
+        - not images_from_ossmmapping.skip_reason is defined
+        - images_from_ossmmapping.stdout_lines is defined
+        - images_from_ossmmapping.stdout_lines | length > 0
+      register: images_mirrored_list_created
+
+    - name: '{{ ansible_name_module }} | oc image mirror | mirror images using the mapping files'
+      command: >
+        oc image mirror {{ item.split('=')[0] }} \
+           localhost:5000/{{ ((item.split('=')[0]).split('/')[1:] | join('/')).split('@sha256')[0] }} \
+           --insecure=true \
+           --keep-manifest-list=true \
+           -a {{ operator_registry_pull_secret_file }}
+      loop: "{{ ossm_mirrored_images_list }}"
+      register: images_mirrored_2nd_pass
+
+    - name: '{{ ansible_name_module }} | block | copy manifest files to container storage location'
+      when:
+        - bundle is defined
+        - bundle | bool
+      block:
+        - name: '{{ ansible_name_module }} | command: cp | copy manifest files '
+          copy:
+            src: "{{ item }}"
+            dest: "{{ registry_container_dir }}"
+            force: yes
+          loop:
+            - "{{ ossm_rh_cat_file }}"
+            - "{{ ossm_olm_file }}"
+            - "{{ ossm_mapping_file }}"
+            - "{{ ossm_orig_manifest_files }}"
+
+        - name: '{{ ansible_name_module }} | archive:xz | create operator image bundle '
+          become: yes
+          command: >
+            tar -c --use-compress-program='pigz -9' -v \
+              -f {{ dir_bundle_location }}/{{ operator_bundle_file_name }} \
+              -C {{ registry_container_dir }} .
+          args:
+            warn: false
+            chdir: "{{ registry_container_dir }}/"
+

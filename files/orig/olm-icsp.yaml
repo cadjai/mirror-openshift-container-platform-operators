@@ -1,0 +1,9 @@
+apiVersion: operator.openshift.io/v1alpha1
+kind: ImageContentSourcePolicy
+metadata:
+  name: olm-image-content-source
+spec:
+  repositoryDigestMirrors:
+  - mirrors:
+    - localhost:5000/openshift-service-mesh
+    source: registry.redhat.io/openshift-service-mesh
