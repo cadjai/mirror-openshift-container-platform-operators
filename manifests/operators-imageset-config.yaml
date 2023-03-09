@@ -1,0 +1,177 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+storageConfig:
+  registry:
+    imageURL: localhost:5000/metadata:latest
+    skipTLS: true
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.10
+    packages:
+    - name: 3scale-operator
+      channels:
+      - name: 'threescale-2.13'
+    - name: advanced-cluster-management
+      channels:
+      - name: 'release-2.7'
+    - name: amq-streams
+      channels:
+      - name: 'stable'
+    - name: ansible-automation-platform-operator
+      channels:
+      - name: 'stable-2.3-cluster-scoped'
+    - name: businessautomation-operator
+      channels:
+      - name: 'stable'
+    - name: cincinnati-operator
+      channels:
+      - name: 'v1'
+    - name: cluster-kube-descheduler-operator
+      channels:
+      - name: 'stable'
+    - name: cluster-logging
+      channels:
+      - name: 'stable'
+    - name: clusterresourceoverride
+      channels:
+      - name: 'stable'
+    - name: codeready-workspaces
+      channels:
+      - name: 'latest'
+    - name: compliance-operator
+      channels:
+      - name: 'release-0.1'
+    - name: container-security-operator
+      channels:
+      - name: 'stable-3.8'
+    - name: costmanagement-metrics-operator
+      channels:
+      - name: 'stable'
+    - name: devspaces
+      channels:
+      - name: 'stable'
+    - name: devworkspace-operator
+      channels:
+      - name: 'fast'
+    - name: elasticsearch-operator
+      channels:
+      - name: 'stable'
+    - name: file-integrity-operator
+      channels:
+      - name: 'v1'
+    - name: jaeger-product
+      channels:
+      - name: 'stable'
+    - name: kiali-ossm
+      channels:
+      - name: 'stable'
+    - name: local-storage-operator
+      channels:
+      - name: 'stable'
+    - name: loki-operator
+      channels:
+      - name: 'stable'
+    - name: mtc-operator
+      channels:
+      - name: 'release-v1.7'
+    - name: mcg-operator
+      channels:
+      - name: 'stable-4.10'
+    - name: multicluster-engine
+      channels:
+      - name: 'stable-2.2'
+    - name: nfd
+      channels:
+      - name: 'stable'
+    - name: node-maintenance-operator
+      channels:
+      - name: 'stable'
+    - name: ocs-operator
+      channels:
+      - name: 'stable-4.10'
+    - name: odf-csi-addons-operator
+      channels:
+      - name: 'stable-4.10'
+    - name: odf-lvm-operator
+      channels:
+      - name: 'stable-4.10'
+    - name: odf-multicluster-orchestrator
+      channels:
+      - name: 'stable-4.10'
+    - name: odf-operator
+      channels:
+      - name: 'stable-4.10'
+    - name: openshift-gitops-operator
+      channels:
+      - name: 'latest'
+    - name: openshift-pipelines-operator-rh
+      channels:
+      - name: 'latest'
+    - name: openshift-special-resource-operator
+      channels:
+      - name: 'stable'
+    - name: performance-addon-operator
+      channels:
+      - name: '4.10'
+    - name: ptp-operator
+      channels:
+      - name: 'stable'
+    - name: redhat-oadp-operator
+      channels:
+      - name: 'stable-1.1'
+    - name: rhacs-operator
+      channels:
+      - name: 'latest'
+    - name: rhpam-kogito-operator
+      channels:
+      - name: '7.x'
+    - name: rhsso-operator
+      channels:
+      - name: 'stable'
+    - name: serverless-operator
+      channels:
+      - name: 'stable'
+    - name: servicemeshoperator
+      channels:
+      - name: 'stable'
+    - name: web-terminal
+      channels:
+      - name: 'fast'
+  - catalog: registry.redhat.io/redhat/community-operator-index:v4.10
+    packages:
+    - name: argocd-operator
+      channels:
+      - name: 'alpha'
+    - name: cert-manager
+      channels:
+      - name: 'stable'
+    - name: keycloak-operator
+      channels:
+      - name: 'fast'
+    - name: mongodb-operator
+      channels:
+      - name: 'alpha'
+    - name: opendatahub-operator
+      channels:
+      - name: 'stable'
+    - name: universal-crossplane
+      channels:
+      - name: 'stable'
+  - catalog: registry.redhat.io/redhat/certified-operator-index:v4.10
+    packages:
+    - name: confluent-for-kubernetes
+      channels:
+      - name: '2.5'
+    - name: elasticsearch-eck-operator-certified
+      channels:
+      - name: 'stable'
+    - name: gitlab-runner-operator
+      channels:
+      - name: 'stable'
+    - name: gpu-operator-certified
+      channels:
+      - name: 'v22.9'
+    - name: minio-operator
+      channels:
+      - name: 'stable'
+

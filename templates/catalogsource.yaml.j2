@@ -1,0 +1,17 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: {{ operator_catalog_name | d('redhat-operator-catalog', true) }}
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+{% if operator_repository is defined and operator_repository != '' %}
+  image: {{ registry_host }}/{{ operator_repository }}/{{ operator_catalog_index | d('redhat-operator-index', true) }}:{{ operator_catalog_index_tag | d('v4.10', true) }}
+{% else %}
+  image: {{ registry_host }}/{{ operator_catalog_index | d('redhat-operator-index', true) }}:{{ operator_catalog_index_tag | d('v4.10', true) }}
+{% endif %}
+  displayName: {{ (operator_catalog_name | d('redhat-operator-catalog')).replace('-', ' ') | title }}
+  publisher: {{ operator_catalog_publisher | d('dpaas', true) }}
+  updateStrategy:
+    registryPoll:
+      interval: 30m

@@ -1,0 +1,228 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- name: ' Konductor | Provision UPI Infra | mirror-operators.yml'
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.6
+    module: "mirror-operators"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+    selinux_py_pkgs:
+      - libselinux
+      - policycoreutils
+      - libsemanage
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/registry.yml'
+  
+  pre_tasks:
+    - name: Ensure required oc-mirror binary is installed on host
+      when:
+        - not oc_mirror_cli is defined or oc_mirror_cli == ''
+      block:
+        - name: '{{ ansible_name_module }} | command:which | Check if oc-mirror is installed'
+          shell: >
+            which oc-mirror
+          ignore_errors: yes
+          register: ocmirror_binary
+
+        - name: '{{ ansible_name_module }} | set_fact |  oc_mirror_cli'
+          set_fact:
+            oc_mirror_cli: "{{ ocmirror_binary.stdout }}"
+          when:
+            - ocmirror_binary is defined
+            - ocmirror_binary.rc is defined
+            - ocmirror_binary.rc == 0
+            - ocmirror_binary.stdout is defined
+            - ocmirror_binary.stdout != ''
+
+    - name: '{{ ansible_name_module }} | command:which | Check if podman is installed'
+      block:
+        - name: '{{ ansible_name_module }} | command:which | Check if oc-mirror is installed'
+          shell: >
+            which podman
+          ignore_errors: yes
+          register: podman_binary
+
+        - name: '{{ ansible_name_module }} | set_fact |  podman_cli'
+          set_fact:
+            podman_cli: "{{ podman_binary.stdout }}"
+          when:
+            - podman_binary is defined
+            - podman_binary.rc is defined
+            - podman_binary.rc == 0
+            - podman_binary.stdout is defined
+            - podman_binary.stdout != ''
+
+  tasks:
+    - name: '{{ ansible_name_module }} | podman:login | Login to quay container registry'
+      no_log: true
+      command: >
+          {{ podman_cli }} login -u {{ default_operator_registry_username }} \
+         -p {{ default_operator_registry_password }} \
+         --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
+          {{ default_operator_registry }}
+      register: authfile_created
+
+    - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'
+      no_log: true
+      command: >
+         {{ podman_cli }} login -u {{ default_operator_registry_username }} \
+          -p {{ default_operator_registry_password }} \
+          --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
+          {{ item.value.image_registry }}
+      with_dict:
+        - "{{ operator_registres_to_mirror }}"
+      when:
+        - item.key is defined and item.key != ""
+        - item.value.source is defined and item.value.source != ""
+        - item.value.image_registry is defined and item.value.image_registry != ""
+
+    - name: '{{ ansible_name_module }} | set_fact |  authfile for registry'
+      set_fact:
+        operator_registry_pull_secret_file: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json"
+
+    - name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: directory
+        mode: 0777
+      loop:
+        - "{{ registry_container_dir }}"
+        - "{{ dir_bundle_location }}"
+
+    - name: '{{ ansible_name_module }} | podman:run | Start registry container '
+      command: >
+        {{ podman_cli }}  run -d --name {{ registry_container_name }} \
+          -p 5000:5000 -v {{ registry_container_dir }}:/var/lib/registry \
+          {{ registry_container_image }}
+
+    ## Run script for operator for which upgrade is being mirrored
+    - name: '{{ ansible_name_module }} | Mirror content using the oc-mirror plugin'
+      command: >
+              {{ oc_mirror_cli }} --config {{ imageset_config_file }} file://{{ dir_bundle_location }} -v5
+      register: content_mirrored
+
+    - name:  '{{ ansible_name_module }} | Generate content manifest file for temp container registry to be used as placeholder for later processing'
+      command: >
+        {{ oc_mirror_cli }} --config {{ imageset_config_file }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://localhost:5000 --dest-skip-tls --manifests-only -v5
+      register: manifests_retrieved
+
+    - name: '{{ ansible_name_module }} | Print Manifest Retrieval output'
+      debug:
+        var: manifests_retrieved
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
+      set_fact:
+        manifest_result_folder: "{{ (manifests_retrieved.stdout_lines[-1]).split('Writing ICSP manifests to ')[1] }}"
+
+    - name: '{{ ansible_name_module }} | Print Manifest Results output'
+      debug:
+        var: manifest_result_folder
+        verbosity: 2
+
+###################### Copy manifest files to location to be pushed to gitab
+    - name: '{{ ansible_name_module }} | copy manifest files to source repo location'
+      when:
+        - operator_content_type is defined
+        - operator_content_type | bool
+      block:
+        - name: '{{ ansible_name_module }} | file:directory | Ensure the manifest directory exist'
+          file:
+            path: "{{ playbook_dir }}/manifests/operators/"
+            state: directory
+            mode: 0755
+
+        - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+          copy:
+            src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
+            dest: "{{ playbook_dir }}/manifests/operators/imageContentSourcePolicy.yaml"
+            force: yes
+          register: icsp_copied
+
+        - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+          copy:
+            src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
+            dest: "{{ playbook_dir }}/manifests/operators/olm-icsp-artifactory.yaml"
+            force: yes
+          register: olm_icsp_copied
+
+        - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
+          copy:
+            src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
+            dest: "{{ playbook_dir }}/manifests/operators/mapping.txt"
+            force: yes
+          register: mapping_copied
+
+        - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
+          copy:
+            src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
+            dest: "{{ playbook_dir }}/manifests/operators/mapping-artifactory.txt"
+            force: yes
+          register: reg_mapping_copied
+
+        - name: '{{ ansible_name_module }} | replace | file name '
+          replace:
+            path: "{{ playbook_dir }}/manifests/operators/olm-icsp-artifactory.yaml"
+            regexp: 'operator-0'
+            replace: '{{ icsp_name | d("dpaas-operators", true) }}'
+
+        - name: '{{ ansible_name_module }} | replace | file name '
+          replace:
+            path: "{{ playbook_dir }}/manifests/operators/olm-icsp-artifactory.yaml"
+            regexp: 'localhost:5000'
+            replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
+
+        - name: '{{ ansible_name_module }} | replace | file name '
+          replace:
+            path: "{{ playbook_dir }}/manifests/operators/mapping-artifactory.txt"
+            regexp: 'localhost:5000'
+            replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
+
+        ######### Copy rh-catalog-source manifest file to location to be pushed to gitab
+
+        - name: '{{ ansible_name_module }} | shell | find catalogs from imageset config file '
+          shell: >
+            grep catalog {{ imageset_config_file }} | awk '{print $3}'
+          register: cat_src_out
+
+        - name: '{{ ansible_name_module }} | Print Catalog Sources output'
+          debug:
+            var: cat_src_out
+            verbosity: 2
+
+        - name: '{{ ansible_name_module }} | template | Copy Autoscaler machineset template to staging location'
+          template:
+            src: "templates/catalogsource.yaml.j2"
+            dest: "{{ playbook_dir }}/manifests/operators/{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource.yaml"
+            force: yes
+          vars:
+            operator_catalog_name: "{{ ((item.split('/')[-1]).split(':')[0]).split('-index')[0] }}s"
+            operator_repository: "{{ item.split('/')[1:-1] | join('/') }}"
+            operator_catalog_index: "{{ (item.split('/')[-1]).split(':')[0] }}"
+            operator_catalog_index_tag: "{{ (item.split('/')[-1]).split(':')[1] }}"
+            registry_host: "localhost:5000"
+            operator_catalog_publisher: "Red Hat"
+          loop: "{{ cat_src_out.stdout_lines }}"
+          when:
+            - cat_src_out is defined
+            - cat_src_out.stdout_lines is defined
+            - cat_src_out.stdout_lines | length > 0
+
+        - name: '{{ ansible_name_module }} | template | Copy Autoscaler machineset template to staging location'
+          template:
+            src: "templates/catalogsource.yaml.j2"
+            dest: "{{ playbook_dir }}/manifests/operators/{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource-artifactory.yaml"
+            force: yes
+          vars:
+            operator_catalog_name: "{{ ((item.split('/')[-1]).split(':')[0]).split('-index')[0] }}s"
+            operator_repository: "{{ operator_local_repository }}/{{ item.split('/')[1:-1]  | join('/') }}"
+            operator_catalog_index: "{{ (item.split('/')[-1]).split(':')[0] }}"
+            operator_catalog_index_tag: "{{ (item.split('/')[-1]).split(':')[1] }}"
+            registry_host: "{{ registry_host_fqdn }}"
+            operator_catalog_publisher: "Red Hat"
+          loop: "{{ cat_src_out.stdout_lines }}"
+          when:
+            - cat_src_out is defined
+            - cat_src_out.stdout_lines is defined
+            - cat_src_out.stdout_lines | length > 0
