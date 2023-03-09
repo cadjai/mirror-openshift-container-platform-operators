@@ -19,13 +19,13 @@
         - not oc_mirror_cli is defined or oc_mirror_cli == ''
       block:
         - name: '{{ ansible_name_module }} | command:which | Check if oc-mirror is installed'
-          shell: >
+          ansible.builtin.shell: >
             which oc-mirror
           ignore_errors: yes
           register: ocmirror_binary
 
         - name: '{{ ansible_name_module }} | set_fact |  oc_mirror_cli'
-          set_fact:
+          ansible.builtin.set_fact:
             oc_mirror_cli: "{{ ocmirror_binary.stdout }}"
           when:
             - ocmirror_binary is defined
@@ -37,13 +37,13 @@
     - name: '{{ ansible_name_module }} | command:which | Check if podman is installed'
       block:
         - name: '{{ ansible_name_module }} | command:which | Check if oc-mirror is installed'
-          shell: >
+          ansible.builtin.shell: >
             which podman
           ignore_errors: yes
           register: podman_binary
 
         - name: '{{ ansible_name_module }} | set_fact |  podman_cli'
-          set_fact:
+          ansible.builtin.set_fact:
             podman_cli: "{{ podman_binary.stdout }}"
           when:
             - podman_binary is defined
@@ -53,36 +53,41 @@
             - podman_binary.stdout != ''
 
   tasks:
+    - name: '{{ ansible_name_module }} | shell | find catalogs from imageset config file '
+      ansible.builtin.shell: >
+        grep catalog {{ imageset_config_file }} | awk '{print $3}'
+      register: cat_src_out
+
+    - name: '{{ ansible_name_module }} | Print Catalog Sources output'
+      ansible.builtin.debug:
+        var: cat_src_out
+        verbosity: 2
+
     - name: '{{ ansible_name_module }} | podman:login | Login to quay container registry'
       no_log: true
-      command: >
+      ansible.builtin.command: >
           {{ podman_cli }} login -u {{ default_operator_registry_username }} \
          -p {{ default_operator_registry_password }} \
-         --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
+         --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json \
           {{ default_operator_registry }}
       register: authfile_created
 
     - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'
       no_log: true
-      command: >
+      ansible.builtin.command: >
          {{ podman_cli }} login -u {{ default_operator_registry_username }} \
           -p {{ default_operator_registry_password }} \
-          --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json \
-          {{ item.value.image_registry }}
-      with_dict:
-        - "{{ operator_registres_to_mirror }}"
-      when:
-        - item.key is defined and item.key != ""
-        - item.value.source is defined and item.value.source != ""
-        - item.value.image_registry is defined and item.value.image_registry != ""
+          --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json \
+          {{ item.split('/')[0] }}
+      loop: "{{ cat_src_out.stdout_lines }}"
 
     - name: '{{ ansible_name_module }} | set_fact |  authfile for registry'
-      set_fact:
-        operator_registry_pull_secret_file: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/oprconfig.json"
+      ansible.builtin.set_fact:
+        operator_registry_pull_secret_file: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json"
 
     - name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
       become: yes
-      file:
+      ansible.builtin.file:
         path: "{{ item }}"
         state: directory
         mode: 0777
@@ -90,34 +95,46 @@
         - "{{ registry_container_dir }}"
         - "{{ dir_bundle_location }}"
 
+    - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'
+      ansible.builtin.shell: >
+        {{ podman_cli }} ps -a | grep  {{ registry_container_name }}  | awk '{print $NF}'
+      ignore_errors: yes
+      register: container_status
+
     - name: '{{ ansible_name_module }} | podman:run | Start registry container '
-      command: >
+      ansible.builtin.command: >
         {{ podman_cli }}  run -d --name {{ registry_container_name }} \
           -p 5000:5000 -v {{ registry_container_dir }}:/var/lib/registry \
           {{ registry_container_image }}
+       when:
+        - container_status is defined
+        - container_status.rc is defined
+        - container_status.rc == 0
+        - container_status.stdout is defined
+        - container_status.stdout == '' or  not registry_container_name in container_status.stdout
+      register: container_start_out
 
-    ## Run script for operator for which upgrade is being mirrored
     - name: '{{ ansible_name_module }} | Mirror content using the oc-mirror plugin'
-      command: >
-              {{ oc_mirror_cli }} --config {{ imageset_config_file }} file://{{ dir_bundle_location }} -v5
+      ansible.builtin.command: >
+        {{ oc_mirror_cli }} --config {{ imageset_config_file }} file://{{ dir_bundle_location }} -v5
       register: content_mirrored
 
     - name:  '{{ ansible_name_module }} | Generate content manifest file for temp container registry to be used as placeholder for later processing'
-      command: >
+      ansible.builtin.command: >
         {{ oc_mirror_cli }} --config {{ imageset_config_file }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://localhost:5000 --dest-skip-tls --manifests-only -v5
       register: manifests_retrieved
 
     - name: '{{ ansible_name_module }} | Print Manifest Retrieval output'
-      debug:
+      ansible.builtin.debug:
         var: manifests_retrieved
         verbosity: 2
 
     - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
-      set_fact:
+      ansible.builtin.set_fact:
         manifest_result_folder: "{{ (manifests_retrieved.stdout_lines[-1]).split('Writing ICSP manifests to ')[1] }}"
 
     - name: '{{ ansible_name_module }} | Print Manifest Results output'
-      debug:
+      ansible.builtin.debug:
         var: manifest_result_folder
         verbosity: 2
 
@@ -128,71 +145,61 @@
         - operator_content_type | bool
       block:
         - name: '{{ ansible_name_module }} | file:directory | Ensure the manifest directory exist'
-          file:
+          ansible.builtin.file:
             path: "{{ playbook_dir }}/manifests/operators/"
             state: directory
             mode: 0755
 
         - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
-          copy:
+          ansible.builtin.copy:
             src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
             dest: "{{ playbook_dir }}/manifests/operators/imageContentSourcePolicy.yaml"
             force: yes
           register: icsp_copied
 
         - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
-          copy:
+          ansible.builtin.copy:
             src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
             dest: "{{ playbook_dir }}/manifests/operators/olm-icsp-artifactory.yaml"
             force: yes
           register: olm_icsp_copied
 
         - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
-          copy:
+          ansible.builtin.copy:
             src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
             dest: "{{ playbook_dir }}/manifests/operators/mapping.txt"
             force: yes
           register: mapping_copied
 
         - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
-          copy:
+          ansible.builtin.copy:
             src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
             dest: "{{ playbook_dir }}/manifests/operators/mapping-artifactory.txt"
             force: yes
           register: reg_mapping_copied
 
         - name: '{{ ansible_name_module }} | replace | file name '
-          replace:
+          ansible.builtin.replace:
             path: "{{ playbook_dir }}/manifests/operators/olm-icsp-artifactory.yaml"
             regexp: 'operator-0'
             replace: '{{ icsp_name | d("dpaas-operators", true) }}'
 
         - name: '{{ ansible_name_module }} | replace | file name '
-          replace:
+          ansible.builtin.replace:
             path: "{{ playbook_dir }}/manifests/operators/olm-icsp-artifactory.yaml"
             regexp: 'localhost:5000'
             replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
 
         - name: '{{ ansible_name_module }} | replace | file name '
-          replace:
+          ansible.builtin.replace:
             path: "{{ playbook_dir }}/manifests/operators/mapping-artifactory.txt"
             regexp: 'localhost:5000'
             replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
 
         ######### Copy rh-catalog-source manifest file to location to be pushed to gitab
 
-        - name: '{{ ansible_name_module }} | shell | find catalogs from imageset config file '
-          shell: >
-            grep catalog {{ imageset_config_file }} | awk '{print $3}'
-          register: cat_src_out
-
-        - name: '{{ ansible_name_module }} | Print Catalog Sources output'
-          debug:
-            var: cat_src_out
-            verbosity: 2
-
         - name: '{{ ansible_name_module }} | template | Copy Autoscaler machineset template to staging location'
-          template:
+          ansible.builtin.template:
             src: "templates/catalogsource.yaml.j2"
             dest: "{{ playbook_dir }}/manifests/operators/{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource.yaml"
             force: yes
@@ -210,7 +217,7 @@
             - cat_src_out.stdout_lines | length > 0
 
         - name: '{{ ansible_name_module }} | template | Copy Autoscaler machineset template to staging location'
-          template:
+          ansible.builtin.template:
             src: "templates/catalogsource.yaml.j2"
             dest: "{{ playbook_dir }}/manifests/operators/{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource-artifactory.yaml"
             force: yes
@@ -226,3 +233,11 @@
             - cat_src_out is defined
             - cat_src_out.stdout_lines is defined
             - cat_src_out.stdout_lines | length > 0
+        - name: '{{ ansible_name_module }} | file | remove workspace directory'
+          ansible.builtin.file:
+            path: "{{ manifest_result_folder.split('/')[0] }}"
+            state: absent
+          when:
+            - cat_src_art_copied is defined
+            - cat_src_copied is defined
+          register: wrkspace_dir_removed
