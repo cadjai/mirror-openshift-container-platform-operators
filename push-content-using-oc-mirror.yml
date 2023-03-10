@@ -121,6 +121,15 @@
 
     - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
       ansible.builtin.set_fact:
+        manifest_result_folder: "{{ (images_pushed.stdout_lines[-1]).split('Writing ICSP manifests to ')[1] }}"
+
+    - name: '{{ ansible_name_module }} | Print Manifest Results output'
+      ansible.builtin.debug:
+        var: manifest_result_folder
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
+      ansible.builtin.set_fact:
         image_mapping_file: "{{ playbook_dir }}/manifests/operators/{{ reg_mapping_filename | d('mapping-registry.txt', true) }}"
 
     - name: '{{ ansible_name_module }} | Print Mapping File Path'
@@ -185,4 +194,10 @@
            --src-tls-verify=false --preserve-digests=true
       loop: "{{ catalog_index_data }}"
       register: operators_indices_uploaded
+
+    - name: '{{ ansible_name_module }} | file | remove workspace directory'
+      ansible.builtin.file:
+        path: "{{ manifest_result_folder.split('/')[0] }}"
+        state: absent
+      register: wrkspace_dir_removed
 
