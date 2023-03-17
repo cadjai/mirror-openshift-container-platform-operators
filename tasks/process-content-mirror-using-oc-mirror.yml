@@ -1,0 +1,40 @@
+---
+- name: '{{ ansible_name_module }} | ansible.builtin.shell | find catalogs from imageset config file '
+  ansible.builtin.shell: >
+    grep catalog {{ imageset_config_file }} | awk '{print $3}'
+  register: cat_src_out
+
+- name: '{{ ansible_name_module }} | Print Catalog Sources output'
+  ansible.builtin.debug:
+    var: cat_src_out
+    verbosity: 2
+
+- name: '{{ ansible_name_module }} | set_fact |  manifests prefix'
+  ansible.builtin.set_fact:
+    manifest_prefix: "{{ (imageset_config_file | basename).split('.')[0] }}"
+
+- name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
+  become: yes
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0777
+  loop:
+    - "{{ dir_bundle_location }}"
+    - "{{ dir_bundle_location }}/{{ manifest_prefix }}"
+
+- name: '{{ ansible_name_module }} | Mirror content using the oc-mirror plugin'
+  ansible.builtin.command: >
+    {{ oc_mirror_cli }} --config {{ imageset_config_file }} file://{{ dir_bundle_location }}/{{ manifest_prefix }} -v5
+  register: content_mirrored
+
+- name: '{{ ansible_name_module }} | Rename bundle so it is related to the imageset config file'
+  ansible.builtin.shell: >
+    mv {{ dir_bundle_location }}/{{ manifest_prefix }}/mirror_seq1_000000.tar {{ dir_bundle_location }}/{{ manifest_prefix }}.tar
+
+- name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
+  become: yes
+  ansible.builtin.file:
+    path: "{{ dir_bundle_location }}/{{ manifest_prefix }}"
+    state: absent
+

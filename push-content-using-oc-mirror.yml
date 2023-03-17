@@ -50,16 +50,6 @@
             - podman_binary.stdout != ''
 
   tasks:
-    - name: '{{ ansible_name_module }} | ansible.builtin.shell | find catalogs from imageset config file '
-      ansible.builtin.shell: >
-        grep catalog {{ imageset_config_file }} | awk '{print $3}'
-      register: cat_src_out
-
-    - name: '{{ ansible_name_module }} | Print Catalog Sources output'
-      ansible.builtin.debug:
-        var: cat_src_out
-        verbosity: 2
-
     - name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
       become: yes
       ansible.builtin.file:
@@ -83,25 +73,6 @@
       ansible.builtin.command: restorecon -irv {{ registry_container_dir }}
       register: fcontext_applied
 
-    - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'
-      ansible.builtin.shell: >
-        {{ podman_cli }} ps -a | grep  {{ registry_container_name }}  | awk '{print $NF}'
-      ignore_errors: yes
-      register: container_status
-
-    - name: '{{ ansible_name_module }} | podman:run | Start registry container '
-      ansible.builtin.command: >
-        {{ podman_cli }}  run -d --name {{ registry_container_name }} \
-          -p 5000:5000 -v {{ registry_container_dir }}:/var/lib/registry \
-          {{ registry_container_image }}
-      when:
-        - container_status is defined
-        - container_status.rc is defined
-        - container_status.rc == 0
-        - container_status.stdout is defined
-        - container_status.stdout == '' or  not registry_container_name in container_status.stdout
-      register: container_start_out
-
     - name: '{{ ansible_name_module }} | set_fact |  authfile for destination registry'
       ansible.builtin.set_fact:
         registry_auth_config: "{{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json"
@@ -114,90 +85,29 @@
            {{ registry_host_fqdn }}
       register: reg_authfile_created
 
-    - name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
-      ansible.builtin.command: >
-        {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://localhost:5000 --dest-skip-tls --dest-use-http -v5
-      register: images_pushed
+    - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content push using imageset  catalogs config files'
+      include_tasks: tasks/process-content-push-using-oc-mirror.yml
+      loop: "{{ imageset_config_files }}"
+      vars:
+        imageset_config_file: "{{ item }}"
+        bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+      register: all_bundle_processed
 
-    - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
-      ansible.builtin.set_fact:
-        manifest_result_folder: "{{ (images_pushed.stdout_lines[-1]).split('Writing ICSP manifests to ')[1] }}"
-
-    - name: '{{ ansible_name_module }} | Print Manifest Results output'
+    - name: '{{ ansible_name_module }} | Print Manifest extraction output'
       ansible.builtin.debug:
-        var: manifest_result_folder
+        var: all_bundle_processed.results
         verbosity: 2
 
-    - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
-      ansible.builtin.set_fact:
-        image_mapping_file: "{{ playbook_dir }}/manifests/operators/{{ reg_mapping_filename | d('mapping-registry.txt', true) }}"
+    - name: '{{ ansible_name_module }} | ansible.builtin.shell | Generate manifests from imageset catalogs config files '
+      include_tasks: tasks/retrieve-manifests-from-oc-mirror-bundle.yml
+      loop: "{{ imageset_config_files }}"
+      vars:
+        imageset_config_file: "{{ item }}"
+        bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+      register: all_bundle_manifest_processed
 
-    - name: '{{ ansible_name_module }} | Print Mapping File Path'
+    - name: '{{ ansible_name_module }} | Print Manifest extraction output'
       ansible.builtin.debug:
-        var: reg_mapping_filename
+        var: all_bundle_manifest_processed.results
         verbosity: 2
-
-    - name: '{{ ansible_name_module }} | Print Manifest File Path'
-      ansible.builtin.debug:
-        var: image_mapping_file
-        verbosity: 2
-
-    - name: '{{ ansible_name_module }} | Print Manifest Content'
-      ansible.builtin.debug:
-        var: item
-        verbosity: 2
-      loop: "{{ lookup('file', image_mapping_file).splitlines() }}"
-
-    - name: Upload images to registry using images from manifests
-      ansible.builtin.command: >
-        skopeo copy --authfile={{ registry_auth_config }} --all \
-           docker://localhost:5000/{{ (item.split('=')[0]).split('/')[1:]  | join('/') }} \
-           docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ ((item.split('=')[0]).split('/')[1:]  | join('/')).split('@sha256')[0] }} \
-           --src-tls-verify=false --preserve-digests=true
-      loop: "{{ lookup('file', image_mapping_file).splitlines() }}"
-      register: operators_uploaded
-
-    - name: '{{ ansible_name_module }} | ansible.builtin.shell | find catalogs from imageset config file '
-      ansible.builtin.shell: >
-        grep catalog {{ imageset_config_file }} | awk '{print $3}'
-      register: cat_src_out
-
-    - name: '{{ ansible_name_module }} | Print Catalog Sources output'
-      ansible.builtin.debug:
-        var: cat_src_out
-        verbosity: 2
-
-    - name: Set custom index image destination repo prefix
-      set_fact:
-        dest_repo_prefix: "{{ registry_host_fqdn }}/{{ operator_local_repository }}"
-
-    - name: Set custom index image name info object
-      set_fact:
-        catalog_index_data: "{{ catalog_index_data | d([], true) + [{'origin': item, 'src': 'localhost:5000/' + item.split('/')[1:] | join('/'), 'dest': dest_repo_prefix + '/' +  item.split('/')[1:-1]  | join('/') + '/' + (catalog_index_name | d((item.split('/')[-1]).split(':'), true)) + ':' + item.split(':')[1]}] }}"
-      loop: "{{ cat_src_out.stdout_lines }}"
-      when:
-        - cat_src_out is defined
-        - cat_src_out.stdout_lines is defined
-        - cat_src_out.stdout_lines | length > 0
-
-    - name: '{{ ansible_name_module }} | Print Custom index data'
-      ansible.builtin.debug:
-        var: item
-        verbosity: 2
-      loop: "{{ catalog_index_data }}"
-
-    - name: Upload custom index images to registry
-      ansible.builtin.command: >
-        skopeo copy --authfile={{ registry_auth_config }} --all \
-           docker://{{ item.src }} \
-           docker://{{ item.dest }} \
-           --src-tls-verify=false --preserve-digests=true
-      loop: "{{ catalog_index_data }}"
-      register: operators_indices_uploaded
-
-    - name: '{{ ansible_name_module }} | file | remove workspace directory'
-      ansible.builtin.file:
-        path: "{{ manifest_result_folder.split('/')[0] }}"
-        state: absent
-      register: wrkspace_dir_removed
 

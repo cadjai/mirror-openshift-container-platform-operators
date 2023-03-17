@@ -1,0 +1,212 @@
+---
+- name: '{{ ansible_name_module }} | ansible.builtin.shell | find catalogs from imageset config file '
+  ansible.builtin.shell: >
+    grep catalog {{ imageset_config_file }} | awk '{print $3}'
+  register: cat_src_out
+
+- name: '{{ ansible_name_module }} | Print Catalog Sources output'
+  ansible.builtin.debug:
+    var: cat_src_out
+    verbosity: 2
+
+- name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
+  become: yes
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0777
+  loop:
+    - "{{ registry_container_dir }}"
+    - "{{ dir_bundle_location }}"
+
+- name: '{{ ansible_name_module }} | set_fact |  content_repo'
+  ansible.builtin.set_fact:
+    content_repo: "{{ operator_local_repository if (operator_local_repository is defined and operator_local_repository != '' and operator_content_type is defined and operator_content_type | bool) else local_repository if (local_repository is defined and local_repository != '' and (not operator_content_type is defined or not operator_content_type | bool)) else '' }}"
+
+- name: '{{ ansible_name_module }} | set_fact |  registry_content_repo_strg'
+  ansible.builtin.set_fact:
+    registry_content_repo_strg: "{{ registry_host_fqdn }}{{ ('/' + content_repo)  if content_repo != '' else content_repo }}"
+  when:
+    - registry_host_fqdn is defined
+    - registry_host_fqdn != ''
+
+- name: '{{ ansible_name_module }} | Print registry content  repo string output'
+  ansible.builtin.debug:
+    var: registry_content_repo_strg
+    verbosity: 2
+
+- name: '{{ ansible_name_module }} | set_fact |  manifests prefix'
+  ansible.builtin.set_fact:
+    manifest_prefix: "{{ (imageset_config_file | basename).split('.')[0] }}"
+
+- name:  '{{ ansible_name_module }} | Generate content manifest file for temp container registry to be used as placeholder for later processing'
+  ansible.builtin.command: >
+    {{ oc_mirror_cli }} --config {{ imageset_config_file }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{ registry_content_repo_strg | default('localhost:5000', true) }} --dest-skip-tls --manifests-only -v5
+  register: manifests_retrieved
+
+- name: '{{ ansible_name_module }} | Print Manifest Retrieval output'
+  ansible.builtin.debug:
+    var: manifests_retrieved
+    verbosity: 2
+
+- name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
+  ansible.builtin.set_fact:
+    manifest_result_folder: "{{ (manifests_retrieved.stdout_lines[-1]).split('Writing ICSP manifests to ')[1] }}"
+
+- name: '{{ ansible_name_module }} | Print Manifest Results output'
+  ansible.builtin.debug:
+    var: manifest_result_folder
+    verbosity: 2
+
+- name: '{{ ansible_name_module }} | copy manifest files to source repo location'
+  when:
+    - not operator_content_type is defined or not operator_content_type | bool
+  block:
+    - name: '{{ ansible_name_module }} | file:directory | Ensure the manifest directory exist'
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/manifests/ocp"
+        state: directory
+        mode: 0755
+
+    - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
+        dest: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-imageContentSourcePolicy.yaml"
+        force: yes
+      register: icsp_copied
+
+    - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
+        dest: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        force: yes
+      register: olm_icsp_copied
+
+    - name: '{{ ansible_name_module }} | replace | file name '
+      ansible.builtin.replace:
+        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        regexp: 'operator-0'
+        replace: '{{ icsp_name | d("dpaas-operators", true) }}'
+
+    - name: '{{ ansible_name_module }} | replace | file name '
+      ansible.builtin.replace:
+        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        regexp: 'localhost:5000'
+        replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
+
+################## Copy manifest files to location to be pushed to gitab
+- name: '{{ ansible_name_module }} | copy manifest files to source repo location'
+  when:
+    - operator_content_type is defined
+    - operator_content_type | bool
+  block:
+    - name: '{{ ansible_name_module }} | file:directory | Ensure the manifest directory exist'
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/manifests/operators/"
+        state: directory
+        mode: 0755
+
+    - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
+        dest: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-imageContentSourcePolicy.yaml"
+        force: yes
+      register: icsp_copied
+
+    - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
+        dest: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        force: yes
+      register: olm_icsp_copied
+
+    - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
+        dest: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-mapping.txt"
+        force: yes
+      register: mapping_copied
+
+    - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
+        dest: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-mapping-registry.txt"
+        force: yes
+      register: reg_mapping_copied
+
+    - name: '{{ ansible_name_module }} | replace | file name '
+      ansible.builtin.replace:
+        path: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        regexp: 'operator-0'
+        replace: '{{ icsp_name | d("dpaas-operators", true) }}'
+
+    - name: '{{ ansible_name_module }} | replace | file name '
+      ansible.builtin.replace:
+        path: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        regexp: 'localhost:5000'
+        replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
+
+    - name: '{{ ansible_name_module }} | replace | file name '
+      ansible.builtin.replace:
+        path: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-mapping-registry.txt"
+        regexp: 'localhost:5000'
+        replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
+
+    ######### Copy rh-catalog-source manifest file to location to be pushed to gitab
+
+    - name: '{{ ansible_name_module }} | template | Copy catalogSource template to staging location'
+      ansible.builtin.template:
+        src: "templates/catalogsource.yaml.j2"
+        dest: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource.yaml"
+        force: yes
+      vars:
+        operator_catalog_name: "{{  catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
+        operator_repository: "{{ item.split('/')[1:-1] | join('/') }}"
+        operator_catalog_index: "{{ (catalog_name + '-index') if catalog_name is defined and catalog_name != '' else (item.split('/')[-1]).split(':')[0] }}"
+        operator_catalog_index_tag: "{{ (item.split('/')[-1]).split(':')[1] }}"
+        registry_host: "localhost:5000"
+        operator_catalog_publisher: "Red Hat"
+      loop: "{{ cat_src_out.stdout_lines }}"
+      when:
+        - cat_src_out is defined
+        - cat_src_out.stdout_lines is defined
+        - cat_src_out.stdout_lines | length > 0
+      register: cat_src_copied
+
+    - name: '{{ ansible_name_module }} | Print Catalog Sources output'
+      ansible.builtin.debug:
+        var: cat_src_copied
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | template | Copy CatalogSource template to staging location'
+      ansible.builtin.template:
+        src: "templates/catalogsource.yaml.j2"
+        dest: "{{ playbook_dir }}/manifests/operators/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource-registry.yaml"
+        force: yes
+      vars:
+        operator_catalog_name: "{{ catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
+        operator_repository: "{{ operator_local_repository }}/{{ item.split('/')[1:-1]  | join('/') }}"
+        operator_catalog_index: "{{ (catalog_name + '-index') if catalog_name is defined and catalog_name != '' else (item.split('/')[-1]).split(':')[0] }}"
+        operator_catalog_index_tag: "{{ (item.split('/')[-1]).split(':')[1] }}"
+        registry_host: "{{ registry_host_fqdn }}"
+        operator_catalog_publisher: "Red Hat"
+      loop: "{{ cat_src_out.stdout_lines }}"
+      when:
+        - cat_src_out is defined
+        - cat_src_out.stdout_lines is defined
+        - cat_src_out.stdout_lines | length > 0
+      register: cat_src_art_copied
+
+    - name: '{{ ansible_name_module }} | Print Catalog Sources output'
+      ansible.builtin.debug:
+        var: cat_src_art_copied
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | file | remove workspace directory'
+      ansible.builtin.file:
+        path: "{{ manifest_result_folder.split('/')[0] }}"
+        state: absent
+      when:
+        - cat_src_art_copied is defined
+        - cat_src_copied is defined
+      register: wrkspace_dir_removed

@@ -1,10 +1,10 @@
 #!/usr/local/bin/ansible-playbook --inventory=inventory
-- name: 'Mirror content using oc-mirror | mirror-operators.yml'
+- name: 'Generate Manifests for contet mirrored using oc-mirror | generate-manifest-from-oc-mirror-bundle.yml'
   hosts: localhost
   vars:
     ansible_python_interpreter: /usr/bin/python3.6
-    module: "content-mirror"
-    ansible_name_module: " Miror Content using oc-mirror | {{ module }}"
+    module: "generate-manifests"
+    ansible_name_module: "Generate Manifests using oc-mirror | {{ module }}"
 
   vars_files:
     - 'vars/vault.yml'
@@ -32,15 +32,16 @@
             - ocmirror_binary.stdout != ''
 
   tasks:
-    - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content mirror within imageset  catalogs config files '
-      include_tasks: tasks/process-content-mirror-using-oc-mirror.yml
+    - name: '{{ ansible_name_module }} | ansible.builtin.shell | Generate manifests from imageset catalogs config files '
+      include_tasks: tasks/retrieve-manifests-from-oc-mirror-bundle.yml
       loop: "{{ imageset_config_files }}"
       vars:
         imageset_config_file: "{{ item }}"
-      register: all_content_mirrored
+        bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+      register: all_bundle_processed
 
-    - name: '{{ ansible_name_module }} | Print Content Mirror output'
+    - name: '{{ ansible_name_module }} | Print Manifest extraction output'
       ansible.builtin.debug:
-        var: all_content_mirrored.results
+        var: all_bundle_processed.results
         verbosity: 2
 
