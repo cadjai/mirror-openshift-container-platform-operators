@@ -1,0 +1,32 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+#storageConfig:
+#  registry:
+#    imageURL: localhost:5000/metadata:latest
+#    skipTLS: true
+mirror:
+  helm:
+    repositories:
+      - name: hashicorp-vault
+        url:  https://github.com/openshift-helm-charts/charts/releases/download/hashicorp-vault-0.22.0/hashicorp-vault-0.22.0.tgz
+        charts:
+          - name: hashicorp-vault
+            version: 0.22.0
+      - name: kafka
+        url: https://github.com/bitnami/charts
+        charts:
+          - name: kafka
+            version: 20.0.5
+      - name: postgresql
+        url: https://github.com/bitnami/charts
+        charts:
+          - name: postgresql
+            version: 12.1.9
+      - name: nirmata-kyverno
+        url: https://github.com/openshift-helm-charts/charts/releases/download/nirmata-kyverno-v2.1.2/nirmata-kyverno-v2.1.2.tgz
+        charts:
+          - name: nirmata-kyverno
+            version: 2.1.2
+    #local:
+    #  - name: podinfo-local
+    #    path: /home/user/podinfo-6.0.0.tgz

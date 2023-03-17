@@ -1,0 +1,16 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+#storageConfig:
+#  registry:
+#    imageURL: localhost:5000/metadata:latest
+#    skipTLS: true
+mirror:
+  platform:
+    architectures:
+      - "amd64"
+    channels:
+      - name: stable-4.10
+        minVersion: 4.9.21
+        maxVersion: 4.10.53
+        shortestPath: true
+    graph: true

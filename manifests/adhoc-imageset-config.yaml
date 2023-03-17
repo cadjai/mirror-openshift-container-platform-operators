@@ -1,0 +1,80 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+#storageConfig:
+#  registry:
+#    imageURL: localhost:5000/metadata:latest
+#    skipTLS: true
+mirror:
+  additionalImages:
+    - name: docker.elastic.co/elasticsearch/elasticsearch-ubi8:8.1.0
+    - name: docker.io/amazon/aws-cli:latest
+    - name: docker.io/splunk/splunk:latest
+    - name: docker.io/splunk/splunk:7.3-redhat
+    - name: docker.io/splunk/universalforwarder:latest
+    - name: docker.io/splunk/fluentd-hec:1.2.8
+    - name: docker.io/nvidia/samples@sha256:2a30fe7e23067bc2c3f8f62a6867702a016af2b80b9f6ce861f3fea4dfd85bc2
+    - name: docker.io/bitnami/postgresql:15.1.0-debian-11-r20
+    - name: docker.io/bitnami/zookeeper:3.8.0-debian-11-r74
+    - name: docker.io/bitnami/kafka:3.3.2-debian-11-r0
+    - name: quay.io/cloudctl/konductor:4.6.18
+    - name: quay.io/cloudctl/konductor:4.6.15
+    - name: quay.io/cloudctl/konductor:4.6.4
+    - name: quay.io/cloudctl/konductor:4.6.6
+    - name: quay.io/cloudctl/konductor:4.7.4
+    - name: quay.io/cloudctl/konductor:4.7.16
+    - name: quay.io/codesparta/konductor:4.6.6
+    - name: quay.io/codesparta/konductor:4.7.4
+    - name: quay.io/codesparta/konductor:4.6.15
+    - name: quay.io/codesparta/konductor:4.7.16
+    - name: quay.io/codesparta/koffer:4.10.11
+    - name: quay.io/codesparta/koffer:4.7.16
+    - name: quay.io/codesparta/koffer:4.7.4
+    - name: quay.io/codesparta/koffer:4.6.16
+    - name: quay.io/codesparta/koffer:4.6.6
+    - name: quay.io/cloudctl/coredns:latest
+    - name: quay.io/cloudctl/haproxy:latest
+    - name: quay.io/cloudctl/nginx:latest
+    - name: quay.io/cloudctl/registry:latest
+    - name: quay.io/cloudctl/runner:latest
+    - name: quay.io/cloudctl/pause:latest
+    - name: quay.io/cloudctl/koffer:latest
+    - name: quay.io/cloudctl/konductor:latest
+    - name: quay.io/bitnami/mongodb:latest
+    - name: quay.io/app-sre/splunk-heavyforwarder:8.0.5-a1a6394cc5ae-fa50892
+    - name: quay.io/app-sre/splunk-forwarder:8.0.5-a1a6394cc5ae-fa50892
+    - name: quay.io/app-sre/splunk-forwarder:latest
+    - name: quay.io/app-sre/splunk-heavyforwarder:latest
+    - name: quay.io/app-sre/splunk-audit-exporter:0.1.10-9c1d6b0
+    - name: quay.io/app-sre/splunk-audit-exporter:0.1.6-78f602d
+    - name: quay.io/app-sre/splunk-forwarder-operator:latest
+    - name: quay.io/app-sre/splunk-forwarder-operator-registry:production-010f87d
+    - name: quay.io/app-sre/splunk-forwarder-operator-registry:production-latest
+    - name: quay.io/app-sre/splunk-forwarder-operator-registry:staging-latest
+    - name: quay.io/opstree/mongo:v5.0.6
+    - name: registry.access.redhat.com/ubi8/dotnet-60:6.0
+    - name: registry.access.redhat.com/ubi8/dotnet-31:3.1
+    - name: registry.access.redhat.com/ubi8/nginx-120
+    - name: registry.access.redhat.com/ubi8/dotnet-60-runtime:6.0
+    - name: registry.access.redhat.com/ubi8/dotnet-31-runtime:3.1
+    - name: registry.connect.redhat.com/hashicorp/vault:1.11.3-ubi
+    - name: registry.connect.redhat.com/hashicorp/vault-k8s:1.0.0-ubi
+    - name: registry.redhat.io/dotnet/dotnet-31-rhel7:3.1
+    - name: registry.redhat.io/dotnet/dotnet-31-runtime-rhel7:3.1
+    - name: registry.redhat.io/rh-acs/main:3.0.61.0
+    - name: registry.redhat.io/rh-acs/scanner:2.15.2
+    - name: registry.redhat.io/rh-acs/scanner-db:2.15.2
+    - name: registry.redhat.io/rh-acs/collector:3.1.25-latest
+    - name: registry.redhat.io/openshift4/ose-logging-fluentd:v4.6
+    - name: registry.redhat.io/rhpam-7/rhpam-businesscentral-rhel8:7.11
+    - name: registry.redhat.io/rhpam-7/rhpam-businesscentral-monitoring-rhel8:7.11
+    - name: registry.redhat.io/rhpam-7/rhpam-controller-rhel8:7.11
+    - name: registry.redhat.io/rhpam-7/rhpam-dashbuilder-rhel8:7.11
+    - name: registry.redhat.io/rhpam-7/rhpam-kieserver-rhel8:7.11
+    - name: registry.redhat.io/rhpam-7/rhpam-smartrouter-rhel8:7.11
+    - name: registry.redhat.io/rhpam-7/rhpam-process-migration-rhel8:7.11
+    - name: registry.redhat.io/rhdm-7/rhdm-decisioncentral-rhel8:7.11
+    - name: registry.redhat.io/rhdm-7/rhdm-controller-rhel8:7.11
+    - name: registry.redhat.io/rhdm-7/rhdm-kieserver-rhel8:7.11
+    - name: registry.redhat.io/compliance/oc-compliance-rhel8:latest
+    - name: registry.redhat.io/ubi8/ubi:latest
+    - name: registry.redhat.io/openshift-logging/eventrouter-rhel8:v0.3
