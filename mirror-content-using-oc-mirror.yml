@@ -36,6 +36,7 @@
     - name: '{{ ansible_name_module }} | COnditionally create imageset config files'
       when:
         - imageset_config_files_to_create is defined
+        - imageset_config_files_to_create is mapping
         - imageset_config_files_to_create.keys() is defined
         - imageset_config_files_to_create.keys() | length > 0
       block:
@@ -47,7 +48,7 @@
             imageset_config_files: "{{ created_imageset_config_files }}"
 
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content mirror within imageset  catalogs config files '
-      include_tasks: tasks/process-content-mirror-using-oc-mirror.yml
+      ansible.builtin.include_tasks: tasks/process-content-mirror-using-oc-mirror.yml
       loop: "{{ imageset_config_files }}"
       vars:
         imageset_config_file: "{{ item }}"
