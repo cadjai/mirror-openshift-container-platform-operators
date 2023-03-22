@@ -1,0 +1,32 @@
+- name: '{{ ansible_name_module }} | set_fact |  content_repo'
+  ansible.builtin.template:
+    src: "templates/imageset-config.yaml.j2"
+    dest: "{{ imageset_config_files_dir | default('/tmp/operators-imageset-configs', true) }}/{{ item.key }}-imageset-config.yml"
+    force: true
+  with_dict: "{{ imageset_config_files_to_create }}"
+  loop_control:
+    index_var: key_cnt
+  when:
+    - item.key is defined and item.key != ""
+    - item.value.src_index is defined and item.value.src_index != ''
+  vars:
+    operator_name: "{{ item.key }}"
+    cat_src_index: "{{ item.value.src_index }}"
+    operator_min_version: "{{ item.value.min_version }}"
+    operator_max_version: "{{ item.value.max_version }}"
+  register: imageset_config_created
+
+- name: '{{ ansible_name_module }} | Print imageset created files output'
+  ansible.builtin.debug:
+    var: imageset_config_created.results
+    verbosity: 2
+
+- name: '{{ ansible_name_module }} | set_fact imageset files'
+  ansible.builtin.set_fact:
+    created_imageset_config_files: "{{ imageset_config_created.results | map(attribute='dest') | flatten }}"
+
+- name: '{{ ansible_name_module }} | Print created imageset config files output'
+  ansible.builtin.debug:
+    var: created_imageset_config_files
+    verbosity: 2
+

@@ -9,6 +9,7 @@
   vars_files:
     - 'vars/vault.yml'
     - 'vars/registry.yml'
+    - 'vars/content-mirror.yml'
   
   pre_tasks:
     - name: Ensure required oc-mirror binary is installed on host
@@ -32,6 +33,19 @@
             - ocmirror_binary.stdout != ''
 
   tasks:
+    - name: '{{ ansible_name_module }} | COnditionally create imageset config files'
+      when:
+        - imageset_config_files_to_create is defined
+        - imageset_config_files_to_create.keys() is defined
+        - imageset_config_files_to_create.keys() | length > 0
+      block:
+        - name: '{{ ansible_name_module }} | ansible.builtin.include_tasks | Prcess content imageset config files creation'
+          ansible.builtin.include_tasks: tasks/create-imageset-manifests-for-single-operators.yml
+
+        - name: '{{ ansible_name_module }} | ansible.builtin.set_fact | set image_set_config_files '
+          ansible.builtin.set_fact:
+            imageset_config_files: "{{ created_imageset_config_files }}"
+
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content mirror within imageset  catalogs config files '
       include_tasks: tasks/process-content-mirror-using-oc-mirror.yml
       loop: "{{ imageset_config_files }}"

@@ -1,0 +1,15 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: {{ cat_src_index | default('registry.redhat.io/redhat/redhat-operator-index:v4.10', true) }}
+    packages:
+    - name: {{ operator_name | default('advanced-cluster-management', true) }}
+      channels:
+      - name: {{ operator_channel | default('release-2.7', true) }}
+{% if operator_min_version is defined and operator_min_version != '' %}
+        minVersion: {{ operator_min_version }}
+{% endif %}
+{% if operator_max_version is defined and operator_max_version != '' %}
+        maxVersion: {{ operator_max_version }}
+{% endif %}

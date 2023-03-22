@@ -1,0 +1,93 @@
+---
+imageset_config_files_to_create:
+  3scale-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  advanced-cluster-management:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  amq-streams:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  businessautomation-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  cincinnati-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  cluster-kube-descheduler-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  cluster-logging:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  clusterresrc_indexoverride:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  codeready-workspaces:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  compliance-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: '0.1.32'
+    max_version: ''
+  container-security-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+  costmanagement-metrics-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    min_version: ''
+    max_version: ''
+imageset_config_files_dir: ''
+
+imageset_config_files:
+  #- manifests/acm-imageset-config.yaml
+  #- manifests/amq-imageset-config.yaml
+  #- manifests/argocd-imageset-config.yaml
+  #- manifests/businessautomation-imageset-config.yaml
+  #- manifests/cert-manager-imageset-config.yaml
+  #- manifests/cincinnati-imageset-config.yaml
+  #- manifests/cluster-kube-descheduler-imageset-config.yaml
+  #- manifests/cluster-logging-imageset-config.yaml
+  #- manifests/cluster-resrc_indexoverride-imageset-config.yaml
+  #- manifests/codeready-imageset-config.yaml
+  #- manifests/compliance-imageset-config.yaml
+  #- manifests/confluent-for-kubernetes-imageset-config.yaml
+  #- manifests/container-security-imageset-config.yaml
+  #- manifests/costmanagement-imageset-config.yaml
+  #- manifests/devspaces-imageset-config.yaml
+  #- manifests/devworkspace-imageset-config.yaml
+  #- manifests/elasticsearch-eck-imageset-config.yaml
+  #- manifests/elasticsearch-imageset-config.yaml
+  #- manifests/fileintegrity-imageset-config.yaml
+  #- manifests/gitlab-runner-imageset-config.yaml
+  #- manifests/gpu-imageset-config.yaml
+  #- manifests/jaeger-product-imageset-config.yaml
+  #- manifests/keycloak-imageset-config.yaml
+  #- manifests/kiali-ossm-imageset-config.yaml
+  #- manifests/local-storage-imageset-config.yaml
+  #- manifests/minio-imageset-config.yaml
+  #- manifests/mongodb-imageset-config.yaml
+  #- manifests/mtc-imageset-config.yaml
+  #- manifests/nfd-imageset-config.yaml
+  #- manifests/ocs-imageset-config.yaml
+  #- manifests/openshift-gitops-imageset-config.yaml
+  #- manifests/openshift-pipelines-imageset-config.yaml
+  #- manifests/performance-addons-imageset-config.yaml
+  #- manifests/ptp-imageset-config.yaml
+  #- manifests/redhat-oadp-imageset-config.yaml
+  #- manifests/rhacs-imageset-config.yaml
+  #- manifests/rhpam-kogito-imageset-config.yaml
+  #- manifests/serverless-imageset-config.yaml
+  #- manifests/servicemesh-imageset-config.yaml
+  #- manifests/web-terminal-imageset-config.yaml
