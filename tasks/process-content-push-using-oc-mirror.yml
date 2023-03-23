@@ -1,34 +1,7 @@
 ---
-- name:  '{{ ansible_name_module }} | Push container straight to destination registry '
-  when:
-    - not use_manifest_file is defined or use_manifest_file | bool
-  block:
-    - name: '{{ ansible_name_module }} | set_fact |  content_repo'
-      ansible.builtin.set_fact:
-        content_repo: "{{ operator_local_repository if (operator_local_repository is defined and operator_local_repository != '' and operator_content_type is defined and operator_content_type | bool) else local_repository if (local_repository is defined and local_repository != '' and (not operator_content_type is defined or not operator_content_type | bool)) else '' }}"
-
-    - name: '{{ ansible_name_module }} | set_fact |  registry_content_repo_strg'
-      ansible.builtin.set_fact:
-        registry_content_repo_strg: "{{ registry_host_fqdn }}{{ ('/' + content_repo)  if content_repo != '' else content_repo }}"
-      when:
-        - registry_host_fqdn is defined
-        - registry_host_fqdn != ''
-
-    - name: '{{ ansible_name_module }} | Print registry content  repo string output'
-      ansible.builtin.debug:
-        var: registry_content_repo_strg
-        verbosity: 2
-
-    - name:  '{{ ansible_name_module }} | Push containers to registry'
-      ansible.builtin.command: >
-        {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }} -v5
-      register: images_pushed
-
-
 - name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
   when:
-    - use_manifest_file is defined
-    - use_manifest_file | bool
+    - (use_manifest_file is defined and use_manifest_file | bool) or  (registry_host_fqdn is defined and "'localhost' in registry_host_fqdn")
   block:
     - name: '{{ ansible_name_module }} | podman:login | Login to extra registry'
       ansible.builtin.shell: >
@@ -49,6 +22,46 @@
         - container_status.stdout == '' or  not registry_container_name in container_status.stdout
       register: container_start_out
 
+- name:  '{{ ansible_name_module }} | Push container straight to destination registry '
+  when:
+    - not use_manifest_file is defined or not use_manifest_file | bool
+  block:
+    - name: '{{ ansible_name_module }} | set_fact |  content_repo'
+      ansible.builtin.set_fact:
+        content_repo: "{{ operator_local_repository if (operator_local_repository is defined and operator_local_repository != '' and operator_content_type is defined and operator_content_type | bool) else local_repository if (local_repository is defined and local_repository != '' and (not operator_content_type is defined or not operator_content_type | bool)) else '' }}"
+
+    - name: '{{ ansible_name_module }} | set_fact |  registry_content_repo_strg'
+      ansible.builtin.set_fact:
+        registry_content_repo_strg: "{{ registry_host_fqdn }}{{ ('/' + content_repo)  if content_repo != '' else content_repo }}"
+      when:
+        - registry_host_fqdn is defined
+        - registry_host_fqdn != ''
+
+    - name: '{{ ansible_name_module }} | Print registry content  repo string output'
+      ansible.builtin.debug:
+        var: registry_content_repo_strg
+        verbosity: 2
+
+    - name:  '{{ ansible_name_module }} | Push containers to registry'
+      ansible.builtin.command: >
+        {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }} -v5
+      when:
+        -  "not 'localhost' in registry_host_fqdn"
+      register: images_pushed
+
+    - name:  '{{ ansible_name_module }} | Push containers to registry'
+      ansible.builtin.command: >
+        {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }}  --dest-skip-tls --dest-use-http  -v5
+      when:
+        -  "'localhost' in registry_host_fqdn"
+      register: images_pushed
+
+
+- name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
+  when:
+    - use_manifest_file is defined
+    - use_manifest_file | bool
+  block:
     - name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
       ansible.builtin.command: >
         {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://localhost:5000 --dest-skip-tls --dest-use-http -v5
@@ -56,7 +69,7 @@
 
     - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
       ansible.builtin.set_fact:
-        image_mapping_file: "{{ playbook_dir }}/manifests/operators/{{ reg_mapping_filename | d('mapping-registry.txt', true) }}"
+        image_mapping_file: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ reg_mapping_filename | d('mapping-registry.txt', true) }}"
 
     - name: '{{ ansible_name_module }} | Print Mapping File Path'
       ansible.builtin.debug:

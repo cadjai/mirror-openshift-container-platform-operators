@@ -3,10 +3,16 @@ apiVersion: mirror.openshift.io/v1alpha2
 mirror:
   operators:
   - catalog: {{ cat_src_index | default('registry.redhat.io/redhat/redhat-operator-index:v4.10', true) }}
+{% if cat_target_name is defined and cat_target_name != '' %}
+    targetName: {{ cat_target_name }}
+{% endif %}
+{% if cat_target_tag is defined and cat_target_tag != '' %}
+    targetTag: {{ cat_target_tag }}
+{% endif %}
     packages:
     - name: {{ operator_name | default('advanced-cluster-management', true) }}
       channels:
-      - name: {{ operator_channel | default('release-2.7', true) }}
+      - name: "{{ operator_channel | default('stable', true) }}"
 {% if operator_min_version is defined and operator_min_version != '' %}
         minVersion: {{ operator_min_version }}
 {% endif %}

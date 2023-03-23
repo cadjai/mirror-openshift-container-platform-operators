@@ -11,9 +11,12 @@
     - item.value.src_index is defined and item.value.src_index != ''
   vars:
     operator_name: "{{ item.key }}"
+    operator_channel: "{{ item.value.channel }}"
     cat_src_index: "{{ item.value.src_index }}"
     operator_min_version: "{{ item.value.min_version }}"
     operator_max_version: "{{ item.value.max_version }}"
+    cat_target_name: "{{ (custom_catalog_prefix + item.key) if set_custom_catalog_name is defined and set_custom_catalog_name | bool else '' }}"
+    cat_target_tag: "{{ custom_catalog_tag if custom_catalog_tag is defined and custom_catalog_tag !='' else item.value.src_index.split(':')[1] if set_custom_catalog_name is defined and set_custom_catalog_name | bool else '' }}"
   register: imageset_config_created
 
 - name: '{{ ansible_name_module }} | Print imageset created files output'

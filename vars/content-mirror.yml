@@ -1,54 +1,228 @@
 ---
 imageset_config_files_to_create:
-  3scale-operator:
-    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
-    min_version: ''
-    max_version: ''
+  #3scale-operator:
+  #  src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+  #  channel: 'threescale-2.13'
+  #  min_version: ''
+  #  max_version: ''
   advanced-cluster-management:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'release-2.7'
     min_version: ''
     max_version: ''
   amq-streams:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
     min_version: ''
     max_version: ''
   businessautomation-operator:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
     min_version: ''
     max_version: ''
   cincinnati-operator:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'v1'
     min_version: ''
     max_version: ''
   cluster-kube-descheduler-operator:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
     min_version: ''
     max_version: ''
   cluster-logging:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
     min_version: ''
     max_version: ''
-  clusterresrc_indexoverride:
+  clusterresourceoverride:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
     min_version: ''
     max_version: ''
   codeready-workspaces:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'latest'
     min_version: ''
     max_version: ''
   compliance-operator:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
-    min_version: '0.1.32'
+    channel: 'release-0.1'
+    min_version: ''
     max_version: ''
   container-security-operator:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable-3.8'
     min_version: ''
     max_version: ''
   costmanagement-metrics-operator:
     src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
     min_version: ''
     max_version: ''
-imageset_config_files_dir: ''
+  devspaces:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  devworkspace-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel:  'fast'
+    min_version: ''
+    max_version: ''
+  elasticsearch-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  file-integrity-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  jaeger-product:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  kiali-ossm:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  local-storage-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  #mtc-operator:
+  #  src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+  #  channel: 'release-v1.7'
+  #  min_version: ''
+  #  max_version: ''
+  nfd:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  ocs-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable-4.10'
+    min_version: ''
+    max_version: ''
+  openshift-gitops-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'latest'
+    min_version: ''
+    max_version: ''
+  openshift-pipelines-operator-rh:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'latest'
+    min_version: ''
+    max_version: ''
+  performance-addon-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: '4.10'
+    min_version: ''
+    max_version: ''
+  ptp-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  redhat-oadp-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable-1.1'
+    min_version: ''
+    max_version: ''
+  rhacs-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'latest'
+    min_version: ''
+    max_version: ''
+  #rhods-operator:
+  #  src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+  #  channel: 'stable'
+  #  min_version: ''
+  #  max_version: ''
+  #rhods-prometheus-operator:
+  #  src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+  #  channel: 'beta'
+  #  min_version: ''
+  #  max_version: ''
+  rhpam-kogito-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: '7.x'
+    min_version: ''
+    max_version: ''
+  rhsso-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  serverless-operator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  servicemeshoperator:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  web-terminal:
+    src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+    channel: 'fast'
+    min_version: ''
+    max_version: ''
+  argocd-operator:
+    src_index: 'registry.redhat.io/redhat/community-operator-index:v4.10'
+    channel: 'alpha'
+    min_version: ''
+    max_version: ''
+  cert-manager:
+    src_index: 'registry.redhat.io/redhat/community-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  keycloak-operator:
+    src_index: 'registry.redhat.io/redhat/community-operator-index:v4.10'
+    channel: 'fast'
+    min_version: ''
+    max_version: ''
+  mongodb-operator:
+    src_index: 'registry.redhat.io/redhat/community-operator-index:v4.10'
+    channel: 'alpha'
+    min_version: ''
+    max_version: ''
+  confluent-for-kubernetes:
+    src_index: 'registry.redhat.io/redhat/certified-operator-index:v4.10'
+    channel: '2.5'
+    min_version: ''
+    max_version: ''
+  elasticsearch-eck-operator-certified:
+    src_index: 'registry.redhat.io/redhat/certified-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  gitlab-runner-operator:
+    src_index: 'registry.redhat.io/redhat/certified-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+  gpu-operator-certified:
+    src_index: 'registry.redhat.io/redhat/certified-operator-index:v4.10'
+    channel: 'v22.9'
+    min_version: ''
+    max_version: ''
+  minio-operator:
+    src_index: 'registry.redhat.io/redhat/certified-operator-index:v4.10'
+    channel: 'stable'
+    min_version: ''
+    max_version: ''
+set_custom_catalog_name: 'true'
+custom_catalog_prefix: 'custom-'
+imageset_config_files_dir: 'single-operator-configs'
 
 imageset_config_files:
   #- manifests/acm-imageset-config.yaml

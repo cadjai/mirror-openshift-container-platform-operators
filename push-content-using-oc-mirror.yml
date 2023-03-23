@@ -83,7 +83,35 @@
         podman login -u {{ registry_admin_username }} -p {{ registry_admin_password }} \
            --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json \
            {{ registry_host_fqdn }}
+      when:
+        - "not 'localhost' in registry_host_fqdn"
       register: reg_authfile_created
+
+    - name: '{{ ansible_name_module }} | set imageset config files variable if not set'
+      when:
+        - not imageset_config_files is defined or (imageset_config_files is defined and not imageset_config_files is mapping)
+        - imageset_config_files_dir is defined
+        - imageset_config_files_dir != ''
+      block:
+        - name: '{{ ansible_name_module }} | find |  Find all imageset files'
+          ansible.builtin.find:
+            path: "{{ imageset_config_files_dir }}"
+            recurse: yes
+            patterns: '*-imageset-config.yml'
+          register: imageset_manifests
+
+        - name: '{{ ansible_name_module }} | set_fact | imageset config file paths'
+          ansible.builtin.set_fact:
+            imageset_config_files: "{{ imageset_manifests.files | map(attribute='path') | flatten }}"
+          when:
+            - imageset_manifests is defined
+            - imageset_manifests.files is defined
+            - imageset_manifests.files | length > 0
+
+        - name: '{{ ansible_name_module }} | Print imageset config files output'
+          ansible.builtin.debug:
+            var: imageset_config_files
+            verbosity: 2
 
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content push using imageset  catalogs config files'
       include_tasks: tasks/process-content-push-using-oc-mirror.yml
@@ -91,6 +119,7 @@
       vars:
         imageset_config_file: "{{ item }}"
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+        catalog_index_name: "{{ ('custom-' + item.split('-imageset')[0]) if  use_manifest_file is defined and use_manifest_file | bool else '' }}"
       register: all_bundle_processed
 
     - name: '{{ ansible_name_module }} | Print Manifest extraction output'
@@ -104,6 +133,7 @@
       vars:
         imageset_config_file: "{{ item }}"
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+        catalog_index_name: "{{ ('custom-' + item.split('-imageset')[0]) if  use_manifest_file is defined and use_manifest_file | bool else '' }}"
       register: all_bundle_manifest_processed
 
     - name: '{{ ansible_name_module }} | Print Manifest extraction output'
