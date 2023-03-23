@@ -160,10 +160,10 @@
         dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource.yaml"
         force: yes
       vars:
-        operator_catalog_name: "{{  catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
+        operator_catalog_name: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
         operator_repository: "{{ item.split('/')[1:-1] | join('/') }}"
-        operator_catalog_index: "{{ (catalog_name + '-index') if catalog_name is defined and catalog_name != '' else (item.split('/')[-1]).split(':')[0] }}"
-        operator_catalog_index_tag: "{{ (item.split('/')[-1]).split(':')[1] }}"
+        operator_catalog_index: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else (catalog_name + '-index') if catalog_name is defined and catalog_name != '' else (item.split('/')[-1]).split(':')[0] }}"
+        operator_catalog_index_tag: "{{ catalog_index_tag if catalog_index_tag is defined and catalog_index_tag != '' else (item.split('/')[-1]).split(':')[1] }}"
         registry_host: "localhost:5000"
         operator_catalog_publisher: "Red Hat"
       loop: "{{ cat_src_out.stdout_lines }}"
@@ -184,10 +184,10 @@
         dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource-registry.yaml"
         force: yes
       vars:
-        operator_catalog_name: "{{ catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
+        operator_catalog_name: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
         operator_repository: "{{ operator_local_repository }}/{{ item.split('/')[1:-1]  | join('/') }}"
-        operator_catalog_index: "{{ (catalog_name + '-index') if catalog_name is defined and catalog_name != '' else (item.split('/')[-1]).split(':')[0] }}"
-        operator_catalog_index_tag: "{{ (item.split('/')[-1]).split(':')[1] }}"
+        operator_catalog_index: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else (catalog_name + '-index') if catalog_name is defined and catalog_name != '' else (item.split('/')[-1]).split(':')[0] }}"
+        operator_catalog_index_tag: "{{ catalog_index_tag if catalog_index_tag is defined and catalog_index_tag != '' else (item.split('/')[-1]).split(':')[1] }}"
         registry_host: "{{ registry_host_fqdn }}"
         operator_catalog_publisher: "Red Hat"
       loop: "{{ cat_src_out.stdout_lines }}"
@@ -210,4 +210,3 @@
         - cat_src_art_copied is defined
         - cat_src_copied is defined
       register: wrkspace_dir_removed
-
