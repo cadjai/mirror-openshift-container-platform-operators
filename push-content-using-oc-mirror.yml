@@ -119,7 +119,8 @@
       vars:
         imageset_config_file: "{{ item }}"
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
-        catalog_index_name: "{{ ('custom-' + item.split('-imageset')[0]) if  use_manifest_file is defined and use_manifest_file | bool else '' }}"
+        catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
+        catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
       register: all_bundle_processed
 
     - name: '{{ ansible_name_module }} | Print Manifest extraction output'
@@ -133,7 +134,8 @@
       vars:
         imageset_config_file: "{{ item }}"
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
-        catalog_index_name: "{{ ('custom-' + item.split('-imageset')[0]) if  use_manifest_file is defined and use_manifest_file | bool else '' }}"
+        catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
+        catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
       register: all_bundle_manifest_processed
 
     - name: '{{ ansible_name_module }} | Print Manifest extraction output'
