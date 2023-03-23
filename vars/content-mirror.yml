@@ -222,46 +222,46 @@ imageset_config_files_to_create:
     max_version: ''
 set_custom_catalog_name: 'true'
 custom_catalog_prefix: 'custom-'
-imageset_config_files_dir: 'single-operator-configs'
+imageset_config_files_dir: 'manifests'
 
 imageset_config_files:
-  #- manifests/acm-imageset-config.yaml
-  #- manifests/amq-imageset-config.yaml
-  #- manifests/argocd-imageset-config.yaml
-  #- manifests/businessautomation-imageset-config.yaml
-  #- manifests/cert-manager-imageset-config.yaml
-  #- manifests/cincinnati-imageset-config.yaml
-  #- manifests/cluster-kube-descheduler-imageset-config.yaml
-  #- manifests/cluster-logging-imageset-config.yaml
-  #- manifests/cluster-resrc_indexoverride-imageset-config.yaml
-  #- manifests/codeready-imageset-config.yaml
-  #- manifests/compliance-imageset-config.yaml
-  #- manifests/confluent-for-kubernetes-imageset-config.yaml
-  #- manifests/container-security-imageset-config.yaml
-  #- manifests/costmanagement-imageset-config.yaml
-  #- manifests/devspaces-imageset-config.yaml
-  #- manifests/devworkspace-imageset-config.yaml
-  #- manifests/elasticsearch-eck-imageset-config.yaml
-  #- manifests/elasticsearch-imageset-config.yaml
-  #- manifests/fileintegrity-imageset-config.yaml
-  #- manifests/gitlab-runner-imageset-config.yaml
-  #- manifests/gpu-imageset-config.yaml
-  #- manifests/jaeger-product-imageset-config.yaml
-  #- manifests/keycloak-imageset-config.yaml
-  #- manifests/kiali-ossm-imageset-config.yaml
-  #- manifests/local-storage-imageset-config.yaml
-  #- manifests/minio-imageset-config.yaml
-  #- manifests/mongodb-imageset-config.yaml
-  #- manifests/mtc-imageset-config.yaml
-  #- manifests/nfd-imageset-config.yaml
-  #- manifests/ocs-imageset-config.yaml
-  #- manifests/openshift-gitops-imageset-config.yaml
-  #- manifests/openshift-pipelines-imageset-config.yaml
-  #- manifests/performance-addons-imageset-config.yaml
-  #- manifests/ptp-imageset-config.yaml
-  #- manifests/redhat-oadp-imageset-config.yaml
-  #- manifests/rhacs-imageset-config.yaml
-  #- manifests/rhpam-kogito-imageset-config.yaml
-  #- manifests/serverless-imageset-config.yaml
-  #- manifests/servicemesh-imageset-config.yaml
-  #- manifests/web-terminal-imageset-config.yaml
+  - "manifests/advanced-cluster-management-imageset-config.yml"
+  - "manifests/amq-streams-imageset-config.yml"
+  - "manifests/businessautomation-operator-imageset-config.yml"
+  - "manifests/cincinnati-operator-imageset-config.yml"
+  - "manifests/cluster-kube-descheduler-operator-imageset-config.yml"
+  - "manifests/cluster-logging-imageset-config.yml"
+  - "manifests/clusterresourceoverride-imageset-config.yml"
+  - "manifests/codeready-workspaces-imageset-config.yml"
+  - "manifests/compliance-operator-imageset-config.yml"
+  - "manifests/container-security-operator-imageset-config.yml"
+  - "manifests/costmanagement-metrics-operator-imageset-config.yml"
+  - "manifests/devspaces-imageset-config.yml"
+  - "manifests/devworkspace-operator-imageset-config.yml"
+  - "manifests/elasticsearch-operator-imageset-config.yml"
+  - "manifests/file-integrity-operator-imageset-config.yml"
+  - "manifests/jaeger-product-imageset-config.yml"
+  - "manifests/kiali-ossm-imageset-config.yml"
+  - "manifests/local-storage-operator-imageset-config.yml"
+  - "manifests/nfd-imageset-config.yml"
+  - "manifests/ocs-operator-imageset-config.yml"
+  - "manifests/openshift-pipelines-operator-rh-imageset-config.yml"
+  - "manifests/openshift-gitops-operator-imageset-config.yml"
+  - "manifests/performance-addon-operator-imageset-config.yml"
+  - "manifests/ptp-operator-imageset-config.yml"
+  - "manifests/redhat-oadp-operator-imageset-config.yml"
+  - "manifests/rhacs-operator-imageset-config.yml"
+  - "manifests/rhpam-kogito-operator-imageset-config.yml"
+  - "manifests/rhsso-operator-imageset-config.yml"
+  - "manifests/serverless-operator-imageset-config.yml"
+  - "manifests/servicemeshoperator-imageset-config.yml"
+  - "manifests/web-terminal-imageset-config.yml"
+  - "manifests/argocd-operator-imageset-config.yml"
+  - "manifests/cert-manager-imageset-config.yml"
+  - "manifests/keycloak-operator-imageset-config.yml"
+  - "manifests/mongodb-operator-imageset-config.yml"
+  - "manifests/confluent-for-kubernetes-imageset-config.yml"
+  - "manifests/gitlab-runner-operator-imageset-config.yml"
+  - "manifests/gpu-operator-certified-imageset-config.yml"
+  - "manifests/elasticsearch-eck-operator-certified-imageset-config.yml"
+  - "manifests/minio-operator-imageset-config.yml"
