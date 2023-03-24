@@ -202,23 +202,23 @@ Note that the archive in this case will have the name of the imageset config fil
 The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
 
 
-##### Push adhoc/additional image content
+##### Push helm charts 
 
-1. Update the appropriate variable to use to push the additional bundle created above to the registry.
+1. Update the appropriate variable to use to push the helm charts bundle created above to the repository.
    - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of additional images that were mirrored.
-   - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with OCP release images.
-   - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the additional image bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
+   - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with helm charts.
+   - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the helm charts bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
 Edit the variable file using any editor like done below using `vi`.
 ```bash
 vi ../vars/content-mirror.yml
 vi ../vars/registry.yml
 ```
 
-2. Push the additional images to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+2. Push the helm charts to the repository using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
 ```bash
  ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the push of the additonal images from the bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt files .    
+The outcome of the above playbook is the push of the helm charts from the bundle tar archive to the specified repository .    
 Those manifests can be committed and are ready to be used to deploy the operators to the appropriate clusters.
 
 
