@@ -1,135 +1,240 @@
 # mirror-openshift-container-platform-operators 
 
-This repository contains helper playbooks to mirror Red Hat Openshift Container Platform operators and create a bundle that can be used in air-gapped or disconnected environments. The playbooks use scripts from two other Red Hat consultants to achieve this.   
+This repository contains helper playbooks to mirror Red Hat Openshift Container Platform operators (as well as OCP payload, adhoc images and helm charts) and create a bundle that can be used in air-gapped or disconnected environments. 
 
-The main script from [Arvin Amirian](https://github.com/redhat-cop/openshift-disconnected-operators) is primarily used for the content mirroring, passing in for each operator index being mirrored, the list of operators. This results in pulling the latest operators for the operator index tag passed in and also only the latest operand images being pulled.   
+Originally the playbooks used scripts from two other Red Hat consultants to achieve this. These can still be found under the apppropriate branches or within v3 tags. 
+The playbooks are been updated to start using the supported oc-mirror binary but anyone who still want to use the old playbooks can checkout the appropriate branches or tags referenced above. 
 
-If you need all versions of operand images, you can either use the [role](https://github.com/cadjai/mirror-ocp4-contents-for-artifactory.git), which provides an automation of the steps described in the [official docs](https://docs.openshift.com/container-platform/4.7/operators/admin/olm-managing-custom-catalogs.html) or follow the steps documented in the documentation.   
+   
+> **:WARNING: This is a new version of the repo which nows uses the thje oc-mirror tool as the default tool. Please use the other braches if you still need the old approach.**
 
-> **:WARNING: As it currently exists, the steps in the documentation (using the opm tool even with pruning), pull all operand images associated with an operator. That might bring in images that are no longer maintained or for which security vulnerabilities might no longer be remediated.**
 
-**It is therefore recommanded for the time being to use the Arvin based approach, which only brings in the latest version of each operand.** 
+There are several solutions to how to mirror content for disconnected/airgapped environments.
+We have used various approaches but oc-mirror is the new supported binary provided and suported by Red Hat. We are switching to using that so that we don't have to maintain custom scripts.
 
-To help ready the file system of the pulled images from the above step (using the Arvin script) so that the images can easily be pushed to the destination registry, the second script from [Alex Flom](https://github.com/RedHatGov/openshift-disconnected-operators/blob/master/container/upload.sh) is used to fix the v2 registry file system layout to help push the content into the destination registry.
+Out of box when the binary is used with a single imageset config file to mirror the various type of content it supports and most importantly for operators, a single ImageContentSourcePolicy (ICSP) is generated for all operators and they all share the same index. One of the issues we were faced with was scanning of the bundle and separating out some of the operator that might violate threshholds set by the security teams at various organizations which was causing unnecessary amount of rework since the bundle usually contains everything. To work around that problem using our previous approach, we were able to mirror a single operator and customize the index to be dedicated the index to the single operator to make it easy to exclude operators that were not passing the vulnerability threshhold. That is one of the key goals of the playbook used here to enable replicating that same approach and make it easy to exclude operators without worrying about how to handle the all encompassing index. 
 
-Originally the playbook pulls operators coming from one index and uses that index for a big bang approach, which simplified the amount of operator indices to track and deploy. 
-However, the downside to this is in maintaining and updating operators. When a single operator or a subset of the operators in the index need to be updated, that usually ends up affecting other operators that are part of that index but are not being updated at the moment. 
-To solve this, we are switching the approach used by dedicating an index to each operator so that their lifecycle can be maintained separately/independently. The main branch now uses that approach where each of the operators included in the list has its own index named after the operator being mirrored. If for any reason you need to still use the original approach of including all operators coming from the same index with that index, you can checkout the operators-by-index-bundle branch. 
+The oc-mirror tool allows some customization of the catalog and that is the key feature used here to enable dedicating a custom index to a single operator. The gist of the workaround is to use an imageset config per operator if one choses to go that route. To make things easy we are using a dictionary variable for the operators to mirror and some automation is used to create the imageset config file for each operator. More details will be provided below.  
 
-If you need to get an updated list of operators different from the list for the various keys in operator_registries_to_mirror, use the following sample commands:
+On the other hand if we stick with the main way the binary is used , we can still use the same playbooks to mirror the content as well as push it to the destionation registry.   
+In addition the playbooks will retrieve the appropriate manifests (ICSP, catalogsource and mapping.txt) so that they can be used to deploy the various items to the various clusters.
+
+The playbooks by default allow running the oc-mirror command against multiple content types.
+
+However, the workflow we are chosing to implement here is to use the same type of content imageset files (ocp release, operators, adhoc images or helm) during each run to keep it simple and consistent.  
+
+To use this approach make sure you have the oc-mirror binary installed on the content mirror host and also available on the bastion used to push the mirrored content to the destination registries, unless you want to push using the mapping file, which can be done using the previous approach (see older branched for existing push playbooks).  
+
+The binary can be downloaded from [the Red Hat oc-mirror client page](https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/oc-mirror.tar.gz) and transferred alongside other mirrored content to the various environment it is to used in .  
+Once the binary is downloaded, installed, configured and made available on your path, navigate to the directory containing the playbooks once you mirror the repo in order to start the process using the following steps.
+
+### Mirror operators using the single operator index approach
+
+#### Single Operator content Mirror
+1. Update the `imageset_config_files_to_create` variable in the `content-mirror.yml` variable file to reflect the operators you want to mirror for which the imageset config file will be created and used to mirror the content for each operator into a single tar archive with the operator name. You will also need to update the `manifests_dir`, `imageset_config_files_dir` and  any other variables as appropriate. You can use your editor of choice to edit the file like in the example below using `vi`.
+
+```bash
+vi ../vars/content-mirror.yml
 ```
-podman run -d --name operator_collector_redhat-operators -p 50051:50051 registry.redhat.io/redhat/redhat-operator-index:v4.7
 
-podman run -d --name operator_collector_redhat-community-operators -p 40051:50051 registry.redhat.io/redhat/community-operator-index:v4.7
-
-podman run -d --name operator_collector_redhat-certified-operators -p 20051:50051 registry.redhat.io/redhat/certified-operator-index:v4.7
-
-podman run -d --name operator_collector_redhat-market-operators -p 30051:50051 registry.redhat.io/redhat/redhat-marketplace-index:v4.7
-
-grpcurl -plaintext localhost:50051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-operators.out
-
-grpcurl -plaintext localhost:40051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-community-operators.out
-
-grpcurl -plaintext localhost:20051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-certified-operators.out
-
-grpcurl -plaintext localhost:30051 api.Registry/ListPackages > /tmp/operators-list/packages-redhat-market-operators.out
+2. Mirror the operators using the `mirror-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
 ```
-The generated files contain the name of the operators and you can pick the ones you want for each of the operator index.
+The outcome of the above playbook is the creation of several tar archives (one for each of the operator listed in the `imageset_config_files_to_create` variable above).
+Those archives are ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
 
-> **:WARNING: If while running the mirror-operators.yml playbook you run into "A signature was required but no signatures exists" or "Unable to pull signed images " error, it is due to the container policy on the host (see /etc/containers/policy.json). You can either add the missing signature to the sigstore if you can get it or disable security for that repository using the "'type': 'insecureAcceptAnything'".**
+#### Single Operator content Push to the repository
+Similar to how we mirrored the operators above, we will need to update the appropriate variables and then run the appropriate playbook to push the content to the destination repository using the steps below
+1. Update the appropriate variables to use to push the right bundles to the registry.
+If you still have the imageset config files generated during the content mirror step, you can use those by updating the value of `imageset_config_files` variable to reflect the location of the files. If not you can also use the `imageset_config_files_dir` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config files related to the operators you want to push.  
+
+> :warning: Note that the `imageset_config_files` variable takes precedence and if defined and populated will be used. If not the files are loaded from the `imageset_config_files_dir`.
+
+Edit the variable file using any edit like the one below.
+```bash
+vi ../vars/content-mirror.yml
+vi ../vars/registry.yml
+```
+The registry.yml file might also need to be edited to reflect the right registry and repository combination.
+
+2. Push the operators to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the push of the operators from the various tar archives to the specified registry and repository and the creation of several manifests retrived from the tar archives or created (the catalogsource file is not part of the archive and is created based on a jinja 2 template) based on the information passed via the variaous variable files edited above .
+Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
 
 
+### Mirror operators or any other content using the oc-mirror with its default configuration
+As stated above the oc-mirror can be used to mirror a wide variety of content (operators, ocp release images, adhoc container images and helm charts). To make things simple for us we chose a workflow where the playbook is run for the same content type where the content type os defined by the imaeset config files used to run the playbooks.
+Instead of having an imageset config file that has operators, ocp release, additional images and helm charts, we are chosing to create an imageset file for each type to match the lifecycle of how each of the content type is mirrored into the environment. Also the key difference between this approach and the previous one above for operators using a dedicated index is that the imageset config files are the expected inputs to this process instead of the playbook creating them based on some defined variable.  
+So the steps below will be the same for all content type and the only change will be the value of the variable pointing to the appropriate imageset config files to use.
 
-> ** Note: Due to Red Hat registry changes to V2 schema 1 [see Red HatKB](https://access.redhat.com/articles/6138332) which affects Red Hat Service Mesh operator [see issue](https://issues.redhat.com/browse/OSSM-1759) two new playbooks have beeb added to enable mirroring and push OSSM operator, This is a temporary workaround which consists in removing all affect schema 1 images from the related images mapping.**
+
+#### Mirror and Push Operators content
+
+##### Mirror Operators content
+
+1. Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file container the list of operators to mirror.
+2. Ensure the `imageset_config_files_to_create` variable is commented out so that the playbook does not missinterpret the intent.
+3. Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the operator bundle to be created .
+4. Update the imageset config file (a default file is named `operators-imageset-config.yaml` under the `manifests` directory ) to reflect the list of operators you are mirroring. Some of the value to set are the the name of the channel, the min and max version for each operator. If needed you can set the targetName and targetTag to provide a custom name and tag for the index.
+For more information about the configuration options available to configure the imageset config file [refer to the oc-mirror official documentation](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) .
+!!! Note that since the index here contains all the operators on the list that belong under that index, removing one would mean that the mirrored index will not contain that index once deployed.
+
+5. Mirror the operators using the `mirror-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the creation of a single tar archive for all the operators in the imageset config file provided in the `imageset_config_files` variable above. Note that the archive in this case will have the name of the imageset config file provided without the extension.
+The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
+
+
+##### Push Operators content
+This use case assumes that the bundle is being pushed directly to the destination registry.
+
+The original playbooks being replace had a use case (not covered here) where the operators can be pushed to a container registry for extra handling and then pushed from there to the destination registry. These playbooks can be run similarly but what is described below will not cover that use case.   
+
+1. Update the appropriate variables to use to push the operator bundle created above to the registry.
+   - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file container the list of operators to mirror.
+   - Set `operator_content_type` variable to `true` in the `content-mirror.yml` variable file. This is so that the extra manifests related to operators are processed.
+   - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the operator bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
+Edit the variable file using any edit like the one below.
+```bash
+vi ../vars/content-mirror.yml
+vi ../vars/registry.yml
+```
+
+2. Push the operator to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the push of the operators from the operator tar archive to the specified registry and repository and the creation of several manifests retrieved from the tar archive or created (the catalogsource file is not part of the archive and is created based on a jinja 2 template) based on the information passed via the variaous variable files edited above .
+Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
+
+
+##### Mirror OCP Release content
+
+1. Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the OCP relase to mirror.
+2. Ensure the `imageset_config_files_to_create` variable is commented out so that the playbook does not missinterpret the intent.
+3. Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the OCP release bundle to be created .
+4. Update the imageset config file (a default file is named `ocp-imageset-config.yaml` under the `manifests` directory ) to reflect the release you are mirroring. Some of the value to set are the the name of the channel, the min and max version and shortest path. You should also ensure that `graph` attribute is set to true to ensure the graph image is included .
+For more information about the configuration options available to configure the imageset config file [refer to the oc-mirror official documentation](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) .
+5. Mirror the OCP release bundle using the `mirror-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the creation of a single tar archive for all the images included in the OCP relases payload based on the releases listed in the imageset config file provided in the `imageset_config_files` variable above.
+Note that the archive in this case will have the name of the imageset config file provided without the extension.
+The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
+
+
+##### Push OCP Release content
+
+1. Update the appropriate variable to use to push the OCP release bundle created above to the registry.
+   - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of OCP releases that were mirrored.
+   - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with OCP release images.
+   - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the OCP release bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
+Edit the variable file using any edit like the one below.
+```bash
+vi ../vars/content-mirror.yml
+vi ../vars/registry.yml
+```
+2. Push the OCP release images to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the push of the OCP release images from the release bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt file .
+Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
+
+
+##### Mirror adhoc/additional image content
+
+1. Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of additional/adhoc container images to mirror.
+2. Ensure the `imageset_config_files_to_create` variable is commented out so that the playbook does not missinterpret the intent.
+3. Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the addtional images bundle to be created .
+4. Update the imageset config file (a default file is named `adhoc-imageset-config.yaml` under the `manifests` directory ) to reflect the list of additional imags you are mirroring. Here you can also block images that might be problematic or causing some issues during mirroring process.
+For more information about the configuration options available to configure the imageset config file [refer to the oc-mirror official documentation](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) .
+5. Mirror the additional images bundle using the `mirror-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the creation of a single tar archive for all the images included in the adhoc/additional image bundle based on the images listed in the imageset config file provided in the `imageset_config_files` variable above.
+Note that the archive in this case will have the name of the imageset config file provided without the extension.
+The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
+
+
+##### Push adhoc/additional image content
+
+1. Update the appropriate variable to use to push the additional bundle created above to the registry.
+   - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of additional images that were mirrored.
+   - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with OCP release images.
+   - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the additional image bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
+Edit the variable file using any edit like the one below.
+```bash
+vi ../vars/content-mirror.yml
+vi ../vars/registry.yml
+```
+2. Push the additional images to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the push of the additonal images from the bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt file .
+Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
+
+
+##### Mirror helm charts
+
+1. Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of helm charts to mirror.
+2. Ensure the `imageset_config_files_to_create` variable is commented out so that the playbook does not missinterpret the intent.
+3. Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the helm charts bundle to be created .
+4. Update the imageset config file (a default file is named `helm-imageset-config.yaml` under the `manifests` directory ) to reflect the list of helm charts you are mirroring.
+For more information about the configuration options available to configure the imageset config file [refer to the oc-mirror official documentation](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) .
+5. Mirror the additional images bundle using the `mirror-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the creation of a single tar archive for all the images included in the adhoc/additional image bundle based on the images listed in the imageset config file provided in the `imageset_config_files` variable above.
+Note that the archive in this case will have the name of the imageset config file provided without the extension.
+The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
+
+
+##### Push adhoc/additional image content
+
+1. Update the appropriate variable to use to push the additional bundle created above to the registry.
+   - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of additional images that were mirrored.
+   - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with OCP release images.
+   - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the additional image bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
+Edit the variable file using any edit like the one below.
+```bash
+vi ../vars/content-mirror.yml
+vi ../vars/registry.yml
+```
+
+2. Push the additional images to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+```bash
+ ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
+```
+The outcome of the above playbook is the push of the additonal images from the bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt files . 
+Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
 
 
 ## Requirements
 
-It is recommended to look at the source repositories for each of the main scripts for the requirements of that script.  
+It is recommended to look at the official documentation for the [oc-mirror binary](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) for the requirements of that binary.  
 The playbooks here only require ansible to run. 
 
 ## Cloning the repository
 1. Use `git clone https://github.com/cadjai/mirror-openshift-container-platform-operators.git` to clone the repository
-2. USe `cd mirror-openshift-container-platform-operators && git submodule update --init --recursive` to initialize all submodules
+2. USe `cd mirror-openshift-container-platform-operators` to change directory into the playbook directory from where to run the playbooks 
  
 ## Running the playbooks 
-### Mirror operators from the Internet Connected Device
-1. Update the vars/registry.yml file to match your environment if necessary
-2. Create the vars/vault.yml using the vars/vault.yml.example as template and using `ansible-vault create vars/vault.yml` 
-3. Run the playbook using the following command   
-   ```
-   ansible-playbook mirror-operators.yml --vault-id @prompt -vvv
-   ``` 
-
-### Push operators images to the destination registry from a Device with registry API access to the registry
-1. Update the vars/registry.yml file to match your environment 
-2. Create the vars/vault.yml using the vars/vault.yml.example as template and using `ansible-vault create vars/vault.yml` 
-3. Run the playbook using the following command   
-   ```
-   ansible-playbook push-operators-to-registry.yml --vault-id @prompt -vvv
-   ``` 
-
-### Mirror OSSM operator from the Internet Connected Device using v1 schema workaround
-1. Update the playbook variables if necessary to match your environment if necessary
-2. Run the playbook using the following command   
-   ```
-   ansible-playbook mirror-ossm-v1-schema-issue-workaround.yml -vvv
-   ``` 
-
-### Push OSSM operator images to the destination registry from a Device with registry API access to the registry using v1 schema workaround
-1. Update the playbook variables to match your environment 
-2. Run the playbook using the following command   
-   ```
-   ansible-playbook push-operators-to-registry.yml --vault-id @prompt -vvv
-   ``` 
+See various sections above covering the various use cases. 
 
 
 ## Playbook Variables
 
-### openshift_client_binary
-Optional:   
-Default: '/usr/bin/oc'   
-The location of the OpenShift client on the Internet Connected Collection Device if you prefer to use your own installed client.   
-
-### opm_binary
-Optional:   
-Default: '/usr/bin/opm'   
-The location of the opm tool client binary on the Internet Connected Collection Device if you prefer to use your own installed version or want it installed for later use.    
-
-### opm_binary_download_url
-Optional:    
-Default: 'https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/opm-linux.tar.gz'   
-The URL to download the opm client from. Only required if the install_opm is set to true and you want to opm client installed on the host.   
-
-### temp_dir
-Optional:   
-Default: '/data'   
-The temporary location the archive is downloaded into before being installed on the host. Only required if the opm or grpcurl client is being installed for later use.    
-
-### opm_binary_downloaded_artifact
-Optional:   
-Default: 'opm-linux.tar.gz'   
-The name of the opm client archive downloaded to the temp location used for the installation.   
-
-### grpcurl_binary
-Optional:   
-Default: '/usr/bin/grpcurl'   
-The location of the grpcurl tool client binary on the Internet Connected Collection Device. Only required if the pull_all is set to true to pull all operators for each of the indices.   
-
-### grpcurl_binary_download_url
-Optional:   
-Default: 'https://github.com/fullstorydev/grpcurl/releases/download/v1.8.1/grpcurl_1.8.1_linux_x86_64.tar.gz'   
-The URL to download the opm client from. Only required if the install_grpcurl is set to true. Only required if the pull_all is set to true to pull all operators for each of the indices.   
-
-### grpcurl_binary_downloaded_artifact
-Optional:   
-Default: 'grpcurl_1.8.1_linux_x86_64.tar.gz'   
-The name of the grpcurl client archive downloaded to the temp location used for the installation. Only required if the pull_all is set to true to pull all operators for each of the indices.    
-
-### pull_all
-Optional:   
-Default: 'false'   
-The flag used to determine if all operators for each of the operator index are mirrored.   
 
 ### registry_host_fqdn
 Required:   
@@ -180,299 +285,92 @@ Optional:
 Default: "/data/bundles"   
 The location on the host where the mirrored operator content bundle is stored.    
 
-### bundle_file_name
+### imageset_config_files_to_create 
 Optional:   
-Default: 'operators-bundle.tar.xz'   
-The name of the mirrored operator content bundle.   
-
-### bundle_file_location
-Optional:   
-Default: "/data/staging/operators-bundle.tar.xz"   
-The location on the host used to push the mirrored content to the destination registry.    
-
-### dir_bundle_staging
-Optional:   
-Default: "/data/staging"   
-The staging location where the staging is processed from. The resulting manifests from the pull operation can be found in there.    
-
-### bundle
-Optional:   
-Default: 'true'   
-The flag to indicate if the bundle should be created after the content has been mirrored.    
-
-### unpack_bundle
-Optional:   
-Default: 'true'   
-The flag to indicate if the bundle should be unpacked before being pushed to the destination registry.   
-
-### operator_registries_to_mirror
-Optional:   
-Default: (see structure below)   
-The dictionary containing list of operator indices to use to generate full list of operators.    
-
-	operator_registries_to_mirror:  
-          redhat-operators:  
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'  
-            container_port: '50051'  
-            host_port: 50051  
-          community-operators:  
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'  
-            container_port: 50051  
-            host_port: 40051  
-          market-operators:  
-            source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.7'  
-            container_port: 50051  
-            host_port: 30051  
-          certified-operators:  
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'  
-            container_port: 50051  
-            host_port: 20051  
-            image_registry: 'registry.connect.redhat.com'
-
-### operators_to_mirror 
-Required:   
 Default: (see structure below)   
 The dictionary containing list of operators to mirror .    
 
-	operators_to_mirror:  
-          3scale-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
+	imageset_config_files_to_create:
           advanced-cluster-management:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+            channel: 'release-2.7'
+            min_version: ''
+            max_version: ''
           amq-streams:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+            channel: 'stable'
+            min_version: ''
+            max_version: ''
           businessautomation-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+            channel: 'stable'
+            min_version: ''
+            max_version: ''
           cincinnati-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          cluster-kube-descheduler-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          cluster-logging:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          clusterresourceoverride:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          codeready-workspaces:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          compliance-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          container-security-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          costmanagement-metrics-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          elasticsearch-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          file-integrity-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          jaeger-product:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          kiali-ossm:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          local-storage-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          nfd:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          ocs-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          performance-addon-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          ptp-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          rhacs-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          rhsso-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          serverless-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          servicemeshoperator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          web-terminal:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          mtc-operator:
-            source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          group-sync-operator:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          keycloak-operator:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          namespace-configuration-operator:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          argocd-operator:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          argocd-operator-helm:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          prometheus:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          prometheus-exporter-operator:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          jupyterlab-operator:
-            source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          anchore-engine:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          elasticsearch-eck-operator-certified:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          falco-certified:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          gitlab-runner-operator:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          gpu-operator-certified:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          nginx-ingress-operator:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          openshiftartifactoryha-operator:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          openshiftpipeline-operator:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "true"
-            upgrade: "false"
-          openshiftxray-operator:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          prisma-cloud-compute-console-operator.v2.0.1:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          redhat-marketplace-operator:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          rocketchat-operator-certified:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-          sysdig-certified:
-            source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
-            start_version: ''
-            mirror: "false"
-            upgrade: "false"
-        
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'  
+            channel: 'stable'
+            min_version: ''
+            max_version: ''
+
+### imageset_config_files 
+Optional:   
+Default: (see structure below)   
+The list containing list of imageset config files to use  .    
+
+	imageset_config_files:
+          - "manifests/advanced-cluster-management-imageset-config.yml"
+          - "manifests/amq-streams-imageset-config.yml"
+          - "manifests/businessautomation-operator-imageset-config.yml"
+          - "manifests/cincinnati-operator-imageset-config.yml"
+          - "manifests/cluster-kube-descheduler-operator-imageset-config.yml"
+          - "manifests/cluster-logging-imageset-config.yml"
+          - "manifests/clusterresourceoverride-imageset-config.yml"
+          - "manifests/codeready-workspaces-imageset-config.yml"
+          - "manifests/compliance-operator-imageset-config.yml"
+          - "manifests/container-security-operator-imageset-config.yml"
+          - "manifests/costmanagement-metrics-operator-imageset-config.yml"
+          - "manifests/devspaces-imageset-config.yml"
+          - "manifests/devworkspace-operator-imageset-config.yml"
+          - "manifests/elasticsearch-operator-imageset-config.yml"
+          - "manifests/file-integrity-operator-imageset-config.yml"
+          - "manifests/jaeger-product-imageset-config.yml"
+          - "manifests/kiali-ossm-imageset-config.yml"
+          - "manifests/local-storage-operator-imageset-config.yml"
+          - "manifests/nfd-imageset-config.yml"
+          - "manifests/ocs-operator-imageset-config.yml"
+          - "manifests/openshift-pipelines-operator-rh-imageset-config.yml"
+          - "manifests/openshift-gitops-operator-imageset-config.yml"
+          - "manifests/performance-addon-operator-imageset-config.yml"
+          - "manifests/ptp-operator-imageset-config.yml"
+          - "manifests/redhat-oadp-operator-imageset-config.yml"
+          - "manifests/rhacs-operator-imageset-config.yml"
+          - "manifests/rhpam-kogito-operator-imageset-config.yml"
+          - "manifests/rhsso-operator-imageset-config.yml"
+          - "manifests/serverless-operator-imageset-config.yml"
+          - "manifests/servicemeshoperator-imageset-config.yml"
+          - "manifests/web-terminal-imageset-config.yml"
+          - "manifests/argocd-operator-imageset-config.yml"
+          - "manifests/cert-manager-imageset-config.yml"
+          - "manifests/keycloak-operator-imageset-config.yml"
+          - "manifests/mongodb-operator-imageset-config.yml"
+          - "manifests/confluent-for-kubernetes-imageset-config.yml"
+          - "manifests/gitlab-runner-operator-imageset-config.yml"
+          - "manifests/gpu-operator-certified-imageset-config.yml"
+          - "manifests/elasticsearch-eck-operator-certified-imageset-config.yml"
+          - "manifests/minio-operator-imageset-config.yml"
+  
+### set_custom_catalog_name 
+Optional:   
+Default: 'true'   
+The flag to indicate if the custom catalog name should be set and used when pushing content to the destination registry.   
+
+### custom_catalog_prefix
+Optional:   
+Default: 'custom-'   
+The string prefix to prepend to the custom catalog name should be set and used when pushing content to the destination registry.   
+
+### imageset_config_files_dir 
+Optional:   
+Default: 'manifests'   
+The directory where where the created or provided imageset config files are placed or retrieved from .   
+

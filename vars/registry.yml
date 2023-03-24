@@ -26,6 +26,7 @@ openshift_cli: '/usr/bin/oc'
 ocp_release_version: "4.7.4"
 
 generate_operator_list: 'false'
+mirrored_index_prefix: 'custom-'
 operators_to_mirror:
   3scale-operator:
     source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
@@ -240,7 +241,7 @@ operators_to_mirror:
   openshiftpipeline-operator:
     source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
     start_version: ''
-    mirror: "false"
+    mirror: "true"
     upgrade: "false"
   openshiftxray-operator:
     source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
