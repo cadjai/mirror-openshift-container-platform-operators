@@ -6,27 +6,28 @@ Originally the playbooks used scripts from two other Red Hat consultants to achi
 The playbooks are been updated to start using the supported oc-mirror binary but anyone who still want to use the old playbooks can checkout the appropriate branches or tags referenced above. 
 
    
-> **:WARNING: This is a new version of the repo which nows uses the thje oc-mirror tool as the default tool. Please use the other braches if you still need the old approach.**
+> **:WARNING: This is a new version of the repo which nows uses the the oc-mirror tool as the default tool. Please use the other braches if you still need the old approach.**
 
 
 There are several solutions to how to mirror content for disconnected/airgapped environments.
 We have used various approaches but oc-mirror is the new supported binary provided and suported by Red Hat. We are switching to using that so that we don't have to maintain custom scripts.
 
-Out of box when the binary is used with a single imageset config file to mirror the various type of content it supports and most importantly for operators, a single ImageContentSourcePolicy (ICSP) is generated for all operators and they all share the same index. One of the issues we were faced with was scanning of the bundle and separating out some of the operator that might violate threshholds set by the security teams at various organizations which was causing unnecessary amount of rework since the bundle usually contains everything. To work around that problem using our previous approach, we were able to mirror a single operator and customize the index to be dedicated the index to the single operator to make it easy to exclude operators that were not passing the vulnerability threshhold. That is one of the key goals of the playbook used here to enable replicating that same approach and make it easy to exclude operators without worrying about how to handle the all encompassing index. 
+Out of box when the binary is used with a single imageset config file to mirror the various types of content it supports and most importantly for operators, a single ImageContentSourcePolicy (ICSP) is generated for all operators and they all share the same index. One of the issues we were faced with was scanning of the bundle and separating out some of the operators that might violate threshholds set by the security teams at various organizations, which was causing unnecessary amount of rework since the bundle usually contains everything.  
+To work around that problem using our previous approach, we were able to mirror a single operator and customize the index to be dedicated to the single operator to make it easy to exclude operators that were not passing the vulnerability threshhold. That is one of the key goals of the playbooks used here to enable replicating that same approach and make it easy to exclude operators without worrying about how to handle the all encompassing index. 
 
-The oc-mirror tool allows some customization of the catalog and that is the key feature used here to enable dedicating a custom index to a single operator. The gist of the workaround is to use an imageset config per operator if one choses to go that route. To make things easy we are using a dictionary variable for the operators to mirror and some automation is used to create the imageset config file for each operator. More details will be provided below.  
+The oc-mirror tool allows some customization of the catalog and that is the key feature used here to enable dedicating a custom index to a single operator. The gist of the workaround is to use an imageset config per operator if one choses to go that route. To make things easy we are using a dictionary variable for the operators to mirror and some automation (Ansible) is used to create the imageset config file for each operator. More details will be provided below.  
 
-On the other hand if we stick with the main way the binary is used , we can still use the same playbooks to mirror the content as well as push it to the destionation registry.   
-In addition the playbooks will retrieve the appropriate manifests (ICSP, catalogsource and mapping.txt) so that they can be used to deploy the various items to the various clusters.
+On the other hand if we stick with the main way the binary is used , we can still use the same playbooks to mirror the content as well as push it to the destination registry.   
+In addition, the playbooks will retrieve the appropriate manifests (ICSP, catalogsource and mapping.txt) so that they can be used to deploy the various items to the various clusters.
 
 The playbooks by default allow running the oc-mirror command against multiple content types.
 
 However, the workflow we are chosing to implement here is to use the same type of content imageset files (ocp release, operators, adhoc images or helm) during each run to keep it simple and consistent.  
 
-To use this approach make sure you have the oc-mirror binary installed on the content mirror host and also available on the bastion used to push the mirrored content to the destination registries, unless you want to push using the mapping file, which can be done using the previous approach (see older branched for existing push playbooks).  
+To use this approach, make sure you have the oc-mirror binary installed on the content mirror host and also available on the bastion used to push the mirrored content to the destination registries, unless you want to push using the mapping file, which can be done using the previous approach (see older branches for existing push playbooks).  
 
-The binary can be downloaded from [the Red Hat oc-mirror client page](https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/oc-mirror.tar.gz) and transferred alongside other mirrored content to the various environment it is to used in .  
-Once the binary is downloaded, installed, configured and made available on your path, navigate to the directory containing the playbooks once you mirror the repo in order to start the process using the following steps.
+The binary can be downloaded from [the Red Hat oc-mirror client page](https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/stable/oc-mirror.tar.gz) and transferred alongside other mirrored content to the various environments it is to be used in .  
+Once the binary is downloaded, installed, configured and made available on your path, navigate to the directory containing the playbooks; once you mirror the repo in order to start the process using the following steps.
 
 ### Mirror operators using the single operator index approach
 
@@ -51,7 +52,7 @@ If you still have the imageset config files generated during the content mirror 
 
 > :warning: Note that the `imageset_config_files` variable takes precedence and if defined and populated will be used. If not the files are loaded from the `imageset_config_files_dir`.
 
-Edit the variable file using any edit like the one below.
+Edit the variable file using any editor like done below using 'vi`.
 ```bash
 vi ../vars/content-mirror.yml
 vi ../vars/registry.yml
@@ -67,8 +68,9 @@ Those manifests can be committed and  ready to be used to deploy the operators t
 
 
 ### Mirror operators or any other content using the oc-mirror with its default configuration
-As stated above the oc-mirror can be used to mirror a wide variety of content (operators, ocp release images, adhoc container images and helm charts). To make things simple for us we chose a workflow where the playbook is run for the same content type where the content type os defined by the imaeset config files used to run the playbooks.
-Instead of having an imageset config file that has operators, ocp release, additional images and helm charts, we are chosing to create an imageset file for each type to match the lifecycle of how each of the content type is mirrored into the environment. Also the key difference between this approach and the previous one above for operators using a dedicated index is that the imageset config files are the expected inputs to this process instead of the playbook creating them based on some defined variable.  
+As stated above the oc-mirror can be used to mirror a wide variety of content (operators, ocp release images, adhoc container images and helm charts).   
+To make things simpler for us we chose a workflow where the playbook is run for the same content type where the content type is defined by the imageset config files used to run the playbooks. 
+Instead of having an imageset config file that has operators, ocp release, additional images and helm charts, we are chosing to create an imageset file for each content type to match the lifecycle of how each of the content type is mirrored into the environment. Also the key difference between this approach and the previous one above for operators using a dedicated index is that the imageset config files are the expected inputs to this process instead of the playbook creating them based on some defined variable.  
 So the steps below will be the same for all content type and the only change will be the value of the variable pointing to the appropriate imageset config files to use.
 
 
@@ -80,21 +82,21 @@ So the steps below will be the same for all content type and the only change wil
 2. Ensure the `imageset_config_files_to_create` variable is commented out so that the playbook does not missinterpret the intent.
 3. Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the operator bundle to be created .
 4. Update the imageset config file (a default file is named `operators-imageset-config.yaml` under the `manifests` directory ) to reflect the list of operators you are mirroring. Some of the value to set are the the name of the channel, the min and max version for each operator. If needed you can set the targetName and targetTag to provide a custom name and tag for the index.
-For more information about the configuration options available to configure the imageset config file [refer to the oc-mirror official documentation](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) .
-!!! Note that since the index here contains all the operators on the list that belong under that index, removing one would mean that the mirrored index will not contain that index once deployed.
+For more information about the configuration options available to configure the imageset config file [refer to the oc-mirror official documentation](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) .   
+> :warning: !!! Note that since the index here contains all the operators on the list that belong under that index, removing one would mean that the mirrored index will not contain that operator once deployed.
 
-5. Mirror the operators using the `mirror-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+5. Mirror the operators using the `mirror-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .  
 ```bash
  ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
 ```
 The outcome of the above playbook is the creation of a single tar archive for all the operators in the imageset config file provided in the `imageset_config_files` variable above. Note that the archive in this case will have the name of the imageset config file provided without the extension.
-The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
+The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.  
 
 
 ##### Push Operators content
 This use case assumes that the bundle is being pushed directly to the destination registry.
 
-The original playbooks being replace had a use case (not covered here) where the operators can be pushed to a container registry for extra handling and then pushed from there to the destination registry. These playbooks can be run similarly but what is described below will not cover that use case.   
+The original playbooks being replaced had a use case (not covered here) where the operators can be pushed to a temporary container registry for extra handling and then pushed from there to the destination registry. These playbooks can be run similarly but what is described below will not cover that use case.   
 
 1. Update the appropriate variables to use to push the operator bundle created above to the registry.
    - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file container the list of operators to mirror.
@@ -106,12 +108,12 @@ vi ../vars/content-mirror.yml
 vi ../vars/registry.yml
 ```
 
-2. Push the operator to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
+2. Push the operators to the registry using the `push-content-using-oc-mirror.yml` playbook passing in the appropriate arguments like below .
 ```bash
  ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the push of the operators from the operator tar archive to the specified registry and repository and the creation of several manifests retrieved from the tar archive or created (the catalogsource file is not part of the archive and is created based on a jinja 2 template) based on the information passed via the variaous variable files edited above .
-Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
+The outcome of the above playbook is the push of the operators from the operator tar archive to the specified registry and repository and the creation of several manifests retrieved from the tar archive or created (the catalogsource file is not part of the archive and is created based on a jinja 2 template) based on the information passed via the various variable files edited above .   
+Those manifests can be committed and are ready to be used to deploy the operators to the appropriate clusters.
 
 
 ##### Mirror OCP Release content
@@ -125,8 +127,8 @@ For more information about the configuration options available to configure the 
 ```bash
  ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the creation of a single tar archive for all the images included in the OCP relases payload based on the releases listed in the imageset config file provided in the `imageset_config_files` variable above.
-Note that the archive in this case will have the name of the imageset config file provided without the extension.
+The outcome of the above playbook is the creation of a single tar archive for all the images included in the OCP releases payload based on the releases listed in the imageset config file provided in the `imageset_config_files` variable above.  
+Note that the archive in this case will have the name of the imageset config file provided without the extension.  
 The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
 
 
@@ -134,9 +136,9 @@ The archive is ready to be pushed to the appropriate registries and repositories
 
 1. Update the appropriate variable to use to push the OCP release bundle created above to the registry.
    - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of OCP releases that were mirrored.
-   - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with OCP release images.
+   - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is no need to create a catalogsource when dealing with OCP release images.
    - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the OCP release bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
-Edit the variable file using any edit like the one below.
+Edit the variable file using any editor like done below using `vi`.
 ```bash
 vi ../vars/content-mirror.yml
 vi ../vars/registry.yml
@@ -145,8 +147,8 @@ vi ../vars/registry.yml
 ```bash
  ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the push of the OCP release images from the release bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt file .
-Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
+The outcome of the above playbook is the push of the OCP release images from the release bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt file .   
+Those manifests can be committed and are ready to be used to deploy the operators to the appropriate clusters.
 
 
 ##### Mirror adhoc/additional image content
@@ -160,8 +162,8 @@ For more information about the configuration options available to configure the 
 ```bash
  ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the creation of a single tar archive for all the images included in the adhoc/additional image bundle based on the images listed in the imageset config file provided in the `imageset_config_files` variable above.
-Note that the archive in this case will have the name of the imageset config file provided without the extension.
+The outcome of the above playbook is the creation of a single tar archive for all the images included in the adhoc/additional image bundle based on the images listed in the imageset config file provided in the `imageset_config_files` variable above.   
+Note that the archive in this case will have the name of the imageset config file provided without the extension.  
 The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
 
 
@@ -171,7 +173,7 @@ The archive is ready to be pushed to the appropriate registries and repositories
    - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of additional images that were mirrored.
    - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with OCP release images.
    - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the additional image bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
-Edit the variable file using any edit like the one below.
+Edit the variable file using any editor like done below using `vi`.
 ```bash
 vi ../vars/content-mirror.yml
 vi ../vars/registry.yml
@@ -180,8 +182,8 @@ vi ../vars/registry.yml
 ```bash
  ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the push of the additonal images from the bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt file .
-Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
+The outcome of the above playbook is the push of the additonal images from the bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt file .   
+Those manifests can be committed and are ready to be used to deploy the operators to the appropriate clusters.
 
 
 ##### Mirror helm charts
@@ -195,8 +197,8 @@ For more information about the configuration options available to configure the 
 ```bash
  ansible-playbook --ask-vault-pass -vvv mirror-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the creation of a single tar archive for all the images included in the adhoc/additional image bundle based on the images listed in the imageset config file provided in the `imageset_config_files` variable above.
-Note that the archive in this case will have the name of the imageset config file provided without the extension.
+The outcome of the above playbook is the creation of a single tar archive for all the images included in the adhoc/additional image bundle based on the images listed in the imageset config file provided in the `imageset_config_files` variable above.   
+Note that the archive in this case will have the name of the imageset config file provided without the extension.   
 The archive is ready to be pushed to the appropriate registries and repositories as well as cross domained to the appropriate air-gapped fabrics.
 
 
@@ -206,7 +208,7 @@ The archive is ready to be pushed to the appropriate registries and repositories
    - Update the `imageset_config_files` variable in the `content-mirror.yml` variable file to reflect the location of the imageset config file containing the list of additional images that were mirrored.
    - Set `operator_content_type` variable to `false` in the `content-mirror.yml` variable file (or remove it). There is not need to create a catalogsource when dealing with OCP release images.
    - Update the `dir_bundle_location` variable in the `registry.yml` variable file to reflect the location of the additional image bundle created during the mirror step. Other variables that can be updated are `operator_local_repository` and `registry_host_fqdn` if necessary.
-Edit the variable file using any edit like the one below.
+Edit the variable file using any editor like done below using `vi`.
 ```bash
 vi ../vars/content-mirror.yml
 vi ../vars/registry.yml
@@ -216,8 +218,8 @@ vi ../vars/registry.yml
 ```bash
  ansible-playbook --ask-vault-pass -vvv push-content-using-oc-mirror.yml
 ```
-The outcome of the above playbook is the push of the additonal images from the bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt files . 
-Those manifests can be committed and  ready to be used to deploy the operators to the appropriate clusters.
+The outcome of the above playbook is the push of the additonal images from the bundle tar archive to the specified registry and repository and the creation of ImageContentSourcePolicy and mapping.txt files .    
+Those manifests can be committed and are ready to be used to deploy the operators to the appropriate clusters.
 
 
 ## Requirements
