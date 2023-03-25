@@ -52,6 +52,7 @@
       loop: "{{ imageset_config_files }}"
       vars:
         imageset_config_file: "{{ item }}"
+        is_bundle_part: "{{ 'true' if imageset_config_files | length > 1 else 'false' }}"
       register: all_content_mirrored
 
     - name: '{{ ansible_name_module }} | Print Content Mirror output'
@@ -59,3 +60,18 @@
         var: all_content_mirrored.results
         verbosity: 2
 
+    - name: '{{ ansible_name_module }} | block | create bundle of single operator bundles'
+      when:
+        - bundle is defined
+        - bundle | bool
+        - imageset_config_files | length > 1
+      block:
+        - name: '{{ ansible_name_module }} | archive:xz | create operator image bundle '
+          become: yes
+          command: >
+            tar -c --use-compress-program='pigz -9' --remove-files -v \
+              -f {{ dir_bundle_location }}/{{ operator_bundle_file_name }} \
+              -C {{ dir_bundle_location }}/bundle .
+          args:
+            warn: false
+            chdir: "{{ dir_bundle_location }}/bundle/"

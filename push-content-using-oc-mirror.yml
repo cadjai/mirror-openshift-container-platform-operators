@@ -89,7 +89,7 @@
 
     - name: '{{ ansible_name_module }} | set imageset config files variable if not set'
       when:
-        - not imageset_config_files is defined or (imageset_config_files is defined and not imageset_config_files is mapping)
+        - not imageset_config_files is defined or (imageset_config_files is defined and not imageset_config_files is mapping and imageset_config_files | type_debug == "list" and imageset_config_files | length == 0)
         - imageset_config_files_dir is defined
         - imageset_config_files_dir != ''
       block:
@@ -113,7 +113,50 @@
             var: imageset_config_files
             verbosity: 2
 
-    - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content push using imageset  catalogs config files'
+    - name: '{{ ansible_name_module }} | block | unpack bundle to controller if required'
+      when:
+        - unpack_bundle is defined
+        - unpack_bundle | bool
+      block:
+        - name: '{{ ansible_name_module }} | file:directory | Ensure the operator images staging directory exist'
+          file:
+            path: "{{ item }}"
+            state: directory
+            mode: 0755
+          loop:
+            - "{{ dir_bundle_location }}"
+
+        - name: '{{ ansible_name_module }} | unarchive:xz | original operator bundle on registry '
+          unarchive:
+            src: "{{ operator_bundle_file_location }}"
+            remote_src: yes
+            dest: "{{ dir_bundle_location }}"
+            mode: 0755
+          register: op_unbundle_out
+
+    - name: '{{ ansible_name_module }} | set_fact | custom catalog'
+      ansible.builtin.set_fact:
+        custom_catalog_names: "{{ custom_catalog_names | d([]) + [{'name': item, 'catalog': (lookup('file', item) | from_yaml).mirror.operators[0].targetName , 'tag': (lookup('file', item) | from_yaml).mirror.operators[0].targetTag }] }}"
+      loop: "{{ imageset_config_files }}"
+
+    - name: '{{ ansible_name_module }} | Print custom tag data output'
+      ansible.builtin.debug:
+        var: custom_catalog_names
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | stat | Check if  bundle file exist'
+      ansible.builtin.stat:
+        path: "{{ dir_bundle_location }}/{{ (item  | basename).split('.')[0] }}.tar"
+      loop: "{{ imageset_config_files }}"
+      register: bundle_exist
+
+    - name: '{{ ansible_name_module }} | Print bundle exist check output'
+      ansible.builtin.debug:
+        var: item
+        verbosity: 2
+      loop: "{{ bundle_exist.results }}"
+
+    - name: '{{ ansible_name_module }} | ansible.builtin.shell | Process content push using imageset  catalogs config files'
       include_tasks: tasks/process-content-push-using-oc-mirror.yml
       loop: "{{ imageset_config_files }}"
       vars:
@@ -121,6 +164,12 @@
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
         catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
         catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
+      when:
+        - bundle_exist.results[key_cnt].stat is defined
+        - bundle_exist.results[key_cnt].stat.exists is defined
+        - bundle_exist.results[key_cnt].stat.exists | bool
+        - bundle_exist.results[key_cnt].stat.path is defined
+        - bundle_name in bundle_exist.results[key_cnt].stat.path
       register: all_bundle_processed
 
     - name: '{{ ansible_name_module }} | Print Manifest extraction output'
@@ -136,6 +185,12 @@
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
         catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
         catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
+      when:
+        - bundle_exist.results[key_cnt].stat is defined
+        - bundle_exist.results[key_cnt].stat.exists is defined
+        - bundle_exist.results[key_cnt].stat.exists | bool
+        - bundle_exist.results[key_cnt].stat.path is defined
+        - bundle_name in bundle_exist.results[key_cnt].stat.path
       register: all_bundle_manifest_processed
 
     - name: '{{ ansible_name_module }} | Print Manifest extraction output'

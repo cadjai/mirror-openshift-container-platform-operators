@@ -23,6 +23,18 @@
     - "{{ dir_bundle_location }}"
     - "{{ dir_bundle_location }}/{{ manifest_prefix }}"
 
+- name: '{{ ansible_name_module }} | file:directory | Ensure the bundle staging directory exist'
+  become: yes
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0777
+  when:
+    - is_bundle_part is defined
+    - is_bundle_part | bool
+  loop:
+    - "{{ dir_bundle_location }}/bundle"
+
 - name: '{{ ansible_name_module }} | Mirror content using the oc-mirror plugin'
   ansible.builtin.command: >
     {{ oc_mirror_cli }} --config {{ imageset_config_file }} file://{{ dir_bundle_location }}/{{ manifest_prefix }} -v5
@@ -30,7 +42,16 @@
 
 - name: '{{ ansible_name_module }} | Rename bundle so it is related to the imageset config file'
   ansible.builtin.shell: >
+    mv {{ dir_bundle_location }}/{{ manifest_prefix }}/mirror_seq1_000000.tar {{ dir_bundle_location }}/bundle/{{ manifest_prefix }}.tar
+  when:
+    - is_bundle_part is defined
+    - is_bundle_part | bool
+
+- name: '{{ ansible_name_module }} | Rename bundle so it is related to the imageset config file'
+  ansible.builtin.shell: >
     mv {{ dir_bundle_location }}/{{ manifest_prefix }}/mirror_seq1_000000.tar {{ dir_bundle_location }}/{{ manifest_prefix }}.tar
+  when:
+    - not is_bundle_part is defined or not is_bundle_part | bool
 
 - name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
   become: yes
