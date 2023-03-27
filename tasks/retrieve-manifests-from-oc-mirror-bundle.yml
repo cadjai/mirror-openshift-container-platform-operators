@@ -35,10 +35,6 @@
     var: registry_content_repo_strg
     verbosity: 2
 
-- name: '{{ ansible_name_module }} | set_fact |  manifests prefix'
-  ansible.builtin.set_fact:
-    manifest_prefix: "{{ (imageset_config_file | basename).split('.')[0] }}"
-
 - name:  '{{ ansible_name_module }} | Generate content manifest file for temp container registry to be used as placeholder for later processing'
   ansible.builtin.command: >
     {{ oc_mirror_cli }} --config {{ imageset_config_file }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{ registry_content_repo_strg | default('localhost:5000', true) }} --dest-skip-tls --manifests-only -v5
@@ -102,53 +98,53 @@
   block:
     - name: '{{ ansible_name_module }} | file:directory | Ensure the manifest directory exist'
       ansible.builtin.file:
-        path: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/"
+        path: "{{ manifests_dir }}"
         state: directory
         mode: 0755
 
     - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
-        dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-imageContentSourcePolicy.yaml"
+        dest: "{{ manifests_dir }}/{{ manifest_prefix }}-imageContentSourcePolicy.yaml"
         force: yes
       register: icsp_copied
 
     - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
-        dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        dest: "{{ manifests_dir }}/{{ manifest_prefix }}-olm-icsp-registry.yaml"
         force: yes
       register: olm_icsp_copied
 
     - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
-        dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-mapping.txt"
+        dest: "{{ manifests_dir }}/{{ manifest_prefix }}-mapping.txt"
         force: yes
       register: mapping_copied
 
     - name: '{{ ansible_name_module }} | copy | copy mapping.txt file '
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/{{ manifest_result_folder }}/mapping.txt"
-        dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-mapping-registry.txt"
+        dest: "{{ manifests_dir }}/{{ manifest_prefix }}-mapping-registry.txt"
         force: yes
       register: reg_mapping_copied
 
     - name: '{{ ansible_name_module }} | replace | file name '
       ansible.builtin.replace:
-        path: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        path: "{{ manifests_dir }}/{{ manifest_prefix }}-olm-icsp-registry.yaml"
         regexp: 'operator-0'
         replace: '{{ icsp_name | d("dpaas-operators", true) }}'
 
     - name: '{{ ansible_name_module }} | replace | file name '
       ansible.builtin.replace:
-        path: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-olm-icsp-registry.yaml"
+        path: "{{ manifests_dir }}/{{ manifest_prefix }}-olm-icsp-registry.yaml"
         regexp: 'localhost:5000'
         replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
 
     - name: '{{ ansible_name_module }} | replace | file name '
       ansible.builtin.replace:
-        path: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-mapping-registry.txt"
+        path: "{{ manifests_dir }}/{{ manifest_prefix }}-mapping-registry.txt"
         regexp: 'localhost:5000'
         replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
 
@@ -157,7 +153,7 @@
     - name: '{{ ansible_name_module }} | template | Copy catalogSource template to staging location'
       ansible.builtin.template:
         src: "templates/catalogsource.yaml.j2"
-        dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource.yaml"
+        dest: "{{ manifests_dir }}/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource.yaml"
         force: yes
       vars:
         operator_catalog_name: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
@@ -181,7 +177,7 @@
     - name: '{{ ansible_name_module }} | template | Copy CatalogSource template to staging location'
       ansible.builtin.template:
         src: "templates/catalogsource.yaml.j2"
-        dest: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource-registry.yaml"
+        dest: "{{ manifests_dir }}/{{ manifest_prefix }}-{{ (item.split('/')[-1]).split(':')[0] }}-catalogsource-registry.yaml"
         force: yes
       vars:
         operator_catalog_name: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else (((item.split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"

@@ -69,7 +69,7 @@
 
     - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
       ansible.builtin.set_fact:
-        image_mapping_file: "{{ playbook_dir }}/{{ manifests_dir | default('manifests/operators', true) }}/{{ reg_mapping_filename | d('mapping-registry.txt', true) }}"
+        image_mapping_file: "{{ manifests_dir }}/{{ reg_mapping_filename | d('mapping-registry.txt', true) }}"
 
     - name: '{{ ansible_name_module }} | Print Mapping File Path'
       ansible.builtin.debug:
