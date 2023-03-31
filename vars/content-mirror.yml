@@ -223,6 +223,7 @@ imageset_config_files_to_create:
 set_custom_catalog_name: 'true'
 custom_catalog_prefix: 'custom-'
 imageset_config_files_dir: 'manifests'
+operator_content_type: 'true'
 
 imageset_config_files:
   - "manifests/advanced-cluster-management-imageset-config.yml"

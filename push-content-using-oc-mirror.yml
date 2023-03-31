@@ -164,7 +164,7 @@
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
         catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
         catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
-        manifests_dir: "{{ playbook_dir }}/{{ (item | basename).split('-imageset')[0] }}-index-manifests"
+        manifests_dir: "{{ playbook_dir }}/manifests/{{ (item | basename).split('-imageset')[0] }}-index-manifests"
         manifest_prefix: "{{ (item | basename).split('-imageset')[0] }}"
       when:
         - bundle_exist.results[key_cnt].stat is defined
@@ -187,7 +187,7 @@
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
         catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
         catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
-        manifests_dir: "{{ playbook_dir }}/{{ (item | basename).split('-imageset')[0] }}-index-manifests"
+        manifests_dir: "{{ playbook_dir }}/manifests/{{ (item | basename).split('-imageset')[0] }}-index-manifests"
         manifest_prefix: "{{ (item | basename).split('-imageset')[0] }}"
       when:
         - bundle_exist.results[key_cnt].stat is defined
