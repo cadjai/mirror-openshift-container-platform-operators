@@ -222,6 +222,15 @@ The outcome of the above playbook is the push of the helm charts from the bundle
 Those manifests can be committed and are ready to be used to deploy the operators to the appropriate clusters.
 
 
+##### Mirror content using preexisting imageset config file
+
+When mirroring any content with an existing imageset config file you could use the following command without having to update any of the vairable files referenced in the various sections above like in the sample command below.
+```bash
+ ansible-playbook --ask-vault-pass -vvv -e operator_local_repository='<operator-repository-to-use>' -e local_repository='<container-local-repository-to-use>' -e dir_bundle_location='<path-to-bundle-directory>' -e operator_content_type=false -e '{"imageset_config_files": ["imageset-configs/ocp-imageset-config.yaml"]}' -e bundle=false -e '{"imageset_config_files_to_create":{}}'  mirror-content-using-oc-mirror.yml
+
+```
+
+
 ## Requirements
 
 It is recommended to look at the official documentation for the [oc-mirror binary](https://docs.openshift.com/container-platform/4.12/installing/disconnected_install/installing-mirroring-disconnected.html) for the requirements of that binary.  
