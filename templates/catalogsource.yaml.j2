@@ -11,7 +11,7 @@ spec:
   image: {{ registry_host }}/{{ operator_catalog_index | d('redhat-operator-index', true) }}:{{ operator_catalog_index_tag | d('v4.10', true) }}
 {% endif %}
   displayName: {{ (operator_catalog_name | d('redhat-operator-catalog')).replace('-', ' ') | title }}
-  publisher: {{ operator_catalog_publisher | d('dpaas', true) }}
+  publisher: {{ operator_catalog_publisher | d('Red Hat', true) }}
   updateStrategy:
     registryPoll:
       interval: 168h 
