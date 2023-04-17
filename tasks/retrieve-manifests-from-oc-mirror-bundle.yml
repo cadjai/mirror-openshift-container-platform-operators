@@ -19,6 +19,22 @@
     - "{{ registry_container_dir }}"
     - "{{ dir_bundle_location }}"
 
+- name: '{{ ansible_name_module }} | set_fact |  content_repo'
+  ansible.builtin.set_fact:
+    content_repo: "{{ operator_local_repository if (operator_local_repository is defined and operator_local_repository != '' and operator_content_type is defined and operator_content_type | bool) else local_repository if (local_repository is defined and local_repository != '' and (not operator_content_type is defined or not operator_content_type | bool)) else '' }}"
+
+- name: '{{ ansible_name_module }} | set_fact |  registry_content_repo_strg'
+  ansible.builtin.set_fact:
+    registry_content_repo_strg: "{{ registry_host_fqdn }}{{ ('/' + content_repo)  if content_repo != '' else content_repo }}"
+  when:
+    - registry_host_fqdn is defined
+    - registry_host_fqdn != ''
+
+- name: '{{ ansible_name_module }} | Print registry content  repo string output'
+  ansible.builtin.debug:
+    var: registry_content_repo_strg
+    verbosity: 2
+
 - name: '{{ ansible_name_module }} | set_fact |  content_repo'
   ansible.builtin.set_fact:
     content_repo: "{{ operator_local_repository if (operator_local_repository is defined and operator_local_repository != '' and operator_content_type is defined and operator_content_type | bool) else local_repository if (local_repository is defined and local_repository != '' and (not operator_content_type is defined or not operator_content_type | bool)) else '' }}"
@@ -74,75 +90,62 @@
     - name: '{{ ansible_name_module }} | copy | copy icsp manifest file 2 of 2'
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
-        dest: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-artifactory.yaml"
+        dest: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-registry.yaml"
         force: yes
       register: olm_icsp_copied
 
     - name: '{{ ansible_name_module }} | replace | file name '
       ansible.builtin.replace:
-        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-artifactory.yaml"
+        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-registry.yaml"
         regexp: 'release-0'
         replace: '{{ icsp_name | d("ocp", true) }}'
 
     - name: '{{ ansible_name_module }} | replace | file name '
       ansible.builtin.replace:
-        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-artifactory.yaml"
+        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-registry.yaml"
         regexp: 'localhost:5000'
         replace: '{{ registry_host_fqdn }}/{{ local_repository }}'
 
-    - name: '{{ ansible_name_module }} | replace | file name '
-      ansible.builtin.replace:
-        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-artifactory.yaml"
-        regexp: '{{ registry_host_fqdn }}/{{ local_repository }}/openshift-release-dev/ocp-v4.0-art-dev'
-        replace: '{{ registry_host_fqdn }}/{{ local_repository }}/{{ release_repository }}'
+    ################## Copy image signature files to location to be pushed to git
+    - name: '{{ ansible_name_module }} | file:directory | Ensure the image-signature directory exist'
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/image-signatures"
+        state: directory
+        mode: 0755
 
-    - name: '{{ ansible_name_module }} | replace | file name '
-      ansible.builtin.replace:
-        path: "{{ playbook_dir }}/manifests/ocp/{{ manifest_prefix }}-olm-icsp-artifactory.yaml"
-        regexp: '{{ registry_host_fqdn }}/{{ local_repository }}/openshift-release-dev/ocp-release'
-        replace: '{{ registry_host_fqdn }}/{{ local_repository }}/{{ release_repository }}'
+    - name: '{{ ansible_name_module }} | command:tar | extract image signature files '
+      become: yes
+      command: >
+        tar -xvf {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }} release-signatures
+      register: image_signature_extracted
 
-################## Copy image signature files to location to be pushed to git
-    - name: '{{ ansible_name_module }} | file:directory | Ensure the image-signature directory exist'
-      ansible.builtin.file:
-        path: "{{ playbook_dir }}/image-signatures"
-        state: directory
-        mode: 0755
+    - name: '{{ ansible_name_module }} | find | retrieve signature files '
+      ansible.builtin.find:
+        path: "{{ playbook_dir }}/release-signatures"
+        patterns: 'signature-sha256-*'
+      register: release_signatures_files
 
-    - name: '{{ ansible_name_module }} | command:tar | extract image signature files '
-      become: yes
-      command: >
-        tar -xvf {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }} release-signatures
-      register: image_signature_extracted
+    - name: '{{ ansible_name_module }} | set_fact | signature file paths'
+      ansible.builtin.set_fact:
+        signature_files: "{{ release_signatures_files.files | map(attribute='path') | flatten }}"
+      when:
+        - release_signatures_files is defined
+        - release_signatures_files.files is defined
+        - release_signatures_files.files | length > 0
 
-    - name: '{{ ansible_name_module }} | find | retrieve signature files '
-      ansible.builtin.find:
-        path: "{{ playbook_dir }}/release-signatures"
-        patterns: 'signature-sha256-*'
-      register: release_signatures_files
+    - name: '{{ ansible_name_module }} | copy | copy signature files into place to be checked in '
+      ansible.builtin.copy:
+        src: "{{ item }}"
+        dest: "{{ playbook_dir }}/image-signatures/{{ item | basename }}"
+        force: yes
+      loop: "{{ signature_files }}"
+      register: signature_files_copied
 
-    - name: '{{ ansible_name_module }} | set_fact | signature file paths'
-      ansible.builtin.set_fact:
-        signature_files: "{{ release_signatures_files.files | map(attribute='path') | flatten }}"
-      when:
-        - release_signatures_files is defined
-        - release_signatures_files.files is defined
-        - release_signatures_files.files | length > 0
-
-    - name: '{{ ansible_name_module }} | copy | copy signature files into place to be checked in '
-      ansible.builtin.copy:
-        src: "{{ item }}"
-        dest: "{{ playbook_dir }}/image-signatures/{{ item | basename }}"
-        force: yes
-      loop: "{{ signature_files }}"
-      register: signature_files_copied
-
-    - name: '{{ ansible_name_module }} | file:directory | Ensure the extracted release-signatures directory does not exist'
-      become: yes
-      ansible.builtin.file:
-        path: "{{ playbook_dir }}/release-signatures"
-        state: absent
-
+    - name: '{{ ansible_name_module }} | file:directory | Ensure the extracted release-signatures directory does not exist'
+      become: yes
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/release-signatures"
+        state: absent
 
 ################## Copy manifest files to location to be pushed to git
 - name: '{{ ansible_name_module }} | copy manifest files to source repo location'
@@ -182,7 +185,7 @@
     - name: '{{ ansible_name_module }} | copy | copy icsp manifest file '
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/{{ manifest_result_folder }}/imageContentSourcePolicy.yaml"
-        dest: "{{ manifests_dir }}/olm-icsp-artifactory.yaml"
+        dest: "{{ manifests_dir }}/olm-icsp-registry.yaml"
         force: yes
       register: olm_icsp_copied
 
@@ -202,13 +205,13 @@
 
     - name: '{{ ansible_name_module }} | replace | file name '
       ansible.builtin.replace:
-        path: "{{ manifests_dir }}/olm-icsp-artifactory.yaml"
+        path: "{{ manifests_dir }}/olm-icsp-registry.yaml"
         regexp: 'operator-0'
-        replace: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else ((( cat_src_out.stdout_lines[0].split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
+        replace: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else ((( cat_src_out.stdout_lines[0].split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}" 
 
     - name: '{{ ansible_name_module }} | replace | file name '
       ansible.builtin.replace:
-        path: "{{ manifests_dir }}/olm-icsp-artifactory.yaml"
+        path: "{{ manifests_dir }}/olm-icsp-registry.yaml"
         regexp: 'localhost:5000'
         replace: '{{ registry_host_fqdn }}/{{ operator_local_repository }}'
 
@@ -223,7 +226,7 @@
     - name: '{{ ansible_name_module }} | template | Copy catalogSource template to staging location'
       ansible.builtin.template:
         src: "templates/catalogsource.yaml.j2"
-        dest: "{{ manifests_dir }}/rh-catalog-source.yaml"
+        dest: "{{ manifests_dir }}/catalog-source.yaml"
         force: yes
       vars:
         operator_catalog_name: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else ((( cat_src_out.stdout_lines[0].split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
@@ -242,11 +245,11 @@
     - name: '{{ ansible_name_module }} | template | Copy CatalogSource template to staging location'
       ansible.builtin.template:
         src: "templates/catalogsource.yaml.j2"
-        dest: "{{ manifests_dir }}/rh-catalog-source-artifactory.yaml"
+        dest: "{{ manifests_dir }}/catalog-source-registry.yaml"
         force: yes
       vars:
         operator_catalog_name: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else catalog_name if catalog_name is defined and catalog_name != '' else ((( cat_src_out.stdout_lines[0].split('/')[-1]).split(':')[0]).split('-index')[0] + 's') }}"
-        operator_repository: "{{ operator_local_repository }}/{{  cat_src_out.stdout_lines[0].split('/')[1:-1]  | join('/') }}"
+        operator_repository: "{{ registry_content_repo_strg | default('localhost:5000', true) }}"
         operator_catalog_index: "{{ catalog_index_name if catalog_index_name is defined and catalog_index_name != '' else (catalog_name + '-index') if catalog_name is defined and catalog_name != '' else ( cat_src_out.stdout_lines[0].split('/')[-1]).split(':')[0] }}"
         operator_catalog_index_tag: "{{ catalog_index_tag if catalog_index_tag is defined and catalog_index_tag != '' else ( cat_src_out.stdout_lines[0].split('/')[-1]).split(':')[1] }}"
         registry_host: "{{ registry_host_fqdn }}"
