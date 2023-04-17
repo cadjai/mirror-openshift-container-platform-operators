@@ -58,4 +58,3 @@
   ansible.builtin.file:
     path: "{{ dir_bundle_location }}/{{ manifest_prefix }}"
     state: absent
-

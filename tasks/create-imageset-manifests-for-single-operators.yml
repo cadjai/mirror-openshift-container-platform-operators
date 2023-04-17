@@ -1,3 +1,11 @@
+---
+- name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
+  become: yes
+  ansible.builtin.file:
+    path: "{{ imageset_config_files_dir | default('/tmp/operators-imageset-configs', true) }}"
+    state: directory
+    mode: 0777
+
 - name: '{{ ansible_name_module }} | set_fact |  content_repo'
   ansible.builtin.template:
     src: "templates/imageset-config.yaml.j2"
@@ -32,4 +40,3 @@
   ansible.builtin.debug:
     var: created_imageset_config_files
     verbosity: 2
-
