@@ -1,0 +1,43 @@
+- name: ' Konductor | Provision UPI Infra | push-adhoc-binaries-to-repository.yml'
+  hosts: localhost
+  become: yes
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/registry.yml'
+  vars:
+    module: "push adhoc binaries"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+
+  tasks:
+    - name: Push operator bundle content into artifactory
+      shell: >
+        curl -vv --cacert {{ registry_ca_cert }} \
+          -u  {{ registry_admin_username }}:{{ registry_admin_password }} \
+          -X PUT --data-binary @{{ item }} \
+           https://{{ adhoc_repository_host_fqdn }}/{{ binary_repository }}/{{ item | basename }}
+      args:
+        warn: no
+      loop: "{{ list_of_binaries_to_upload | default([], true) | list }}"
+      when:
+        - binary_repository is defined
+        - binary_repository != ''
+        - list_of_binaries_to_upload is defined
+        - list_of_binaries_to_upload | length > 0
+      register: binaries_upload_out
+
+    - name: Push operator bundle content into artifactory
+      shell: >
+        curl -vv --cacert {{ registry_ca_cert }} \
+          -u  {{ registry_admin_username }}:{{ registry_admin_password }} \
+          -X PUT --data-binary @{{ item }} \
+           https://{{ adhoc_repository_host_fqdn }}/{{ charts_repository }}/{{ item | basename }}
+      args:
+        warn: no
+      loop: "{{ list_of_charts_to_upload | default([], true) | list }}"
+      when:
+        - charts_repository is defined
+        - charts_repository != ''
+        - list_of_charts_to_upload is defined
+        - list_of_charts_to_upload | length > 0
+      register: charts_upload_out
+

@@ -1,0 +1,174 @@
+- name: ' Konductor | Provision UPI Infra | push-adhoc-repositories-to-git.yml'
+  hosts: localhost
+  #become: yes
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/registry.yml'
+  vars:
+    module: "push adhoc repositories to git"
+    ansible_name_module: " Konductor | Provision UPI Infra | {{ module }}"
+
+  tasks:
+    - name: '{{ ansible_name_module }} | set_fact | Ensure repositories staging directory value is set  '
+      set_fact:
+        repo_staging_dir: "/tmp/repos"
+      when:
+        - not repo_staging_dir is defined or repo_staging_dir == ''
+
+    - name: '{{ ansible_name_module }} | set_fact | Ensure repository branch value is set  '
+      set_fact:
+        git_repository_branch: "main"
+      when:
+        - not git_repository_branch is defined or git_repository_branch == ''
+
+    - name: '{{ ansible_name_module }} | file:state=directory | Ensure repositories staging directory exist '
+      file:
+        path: "{{ repo_staging_dir }}"
+        state: directory
+        recurse: true
+
+    - name: '{{ ansible_name_module }} | file:state=directory | Ensure git ssh key staging directory exist '
+      file:
+        path: "{{ repo_staging_dir }}/ssh"
+        state: directory
+        recurse: true
+
+    - name: '{{ ansible_name_module }} | file:state=directory | Ensure git ssh key staging directory exist '
+      file:
+        path: "{{ repo_staging_dir }}/ssh/id_rsa"
+        state: touch
+        mode: 0644
+      register: git_file_touch_out
+
+    - name: '{{ ansible_name_module }} | Print git ssh key file touch output'
+      debug:
+        var: git_file_touch_out
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | file:state=directory | Ensure git ssh key staging file exist '
+      shell: >
+        echo {{ git_private_key }} | base64 -d > {{ repo_staging_dir }}/ssh/id_rsa
+      register: git_file_out
+
+    - name: '{{ ansible_name_module }} | Print git ssh key file creation output'
+      debug:
+        var: git_file_out
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | command:which | check if git is installed '
+      command: which git
+      ignore_errors: yes
+      failed_when:
+        - git_binary_check.rc > 0
+        - "not 'no git' in git_binary_check.stderr"
+      register: git_binary_check
+
+    - name: '{{ ansible_name_module }} | Pull repository binaries from artifactory'
+      get_url:
+        force: yes
+        dest: "{{ repo_staging_dir }}"
+        url: "https://{{ adhoc_repository_host_fqdn }}/{{ repository_binary_location }}/{{ item | basename }}"
+        username: "{{ registry_admin_username }}"
+        password: "{{ registry_admin_password }}"
+        #validate_certs: false
+      loop: "{{ list_of_repositories_to_download | default([], true) | list }}"
+      register: repositories_download_out
+
+    - name: '{{ ansible_name_module }} | Print  repositories download output'
+      debug:
+        var: repositories_download_out.results
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | Print each repository download output'
+      debug:
+        var: item
+        verbosity: 2
+      loop: "{{ repositories_download_out.results }}"
+
+    - name: '{{ ansible_name_module }} | file:state=directory | Ensure repositories staging directory exist '
+      file:
+        path: "{{ repo_staging_dir }}/{{ (item.item.split('.tgz')[0]) | replace('.', '-') }}"
+        state: directory
+        recurse: true
+      loop: "{{ repositories_download_out.results }}"
+      register: repositories_staging_dir_out
+
+    - name: '{{ ansible_name_module }} | Print  repositories staging dir output'
+      debug:
+        var: repositories_staging_dir_out.results
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | Print each repository staging dir output'
+      debug:
+        var: item
+        verbosity: 2
+      loop: "{{ repositories_staging_dir_out.results }}"
+
+    - name: '{{ ansible_name_module }} | shell:tar | downloaded repository files to '
+      unarchive:
+        src: "{{ item.item.dest }}"
+        dest: "{{ item.path }}"
+      loop: "{{ repositories_staging_dir_out.results }}"
+      when:
+        - item.path is defined
+        - item.path != ''
+        - item.item.dest is defined
+        - item.item.dest != ''
+      register: hydrate_out
+
+    - name: '{{ ansible_name_module }} | Print  repositories hydration output'
+      debug:
+        var: hydrate_out.results
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | Print each repository hydration output'
+      debug:
+        var: item.item
+        verbosity: 2
+      loop: "{{ hydrate_out.results }}"
+
+    - name: '{{ ansible_name_module }} | command:git | set default branch '
+      shell: >
+        {{ git_binary_check.stdout }} config  --global init.defaultBranch {{ git_repository_branch }}
+      when:
+        - git_binary_check is defined
+        - git_binary_check.rc is defined
+        - git_binary_check.rc == 0
+        - git_binary_check.stdout is defined
+        - git_binary_check.stdout != ''
+        - hydrate_out.results is defined
+        - hydrate_out.results | length > 0
+      register: git_default_branch_config_out
+
+    - name: '{{ ansible_name_module }} | command:git | initialize downloaded repository '
+      shell: |
+        pushd  {{ item.item.path }}
+        {{ git_binary_check.stdout }} init {{ item.item.path }}
+        {{ git_binary_check.stdout }} remote add origin  https://{{ git_repository_access_token_name }}:{{git_repository_access_token}}@{{ git_repository_host_fqdn }}/{{ git_repository_group_name }}/{{ item.item.path | basename }}.git
+        {{ git_binary_check.stdout }} add .
+        {{ git_binary_check.stdout }} commit -m "initial upload"
+        {{ git_binary_check.stdout }} push https://{{ git_repository_access_token_name }}:{{git_repository_access_token}}@{{ git_repository_host_fqdn }}/{{ git_repository_group_name }}/{{ item.item.path | basename }}.git
+        popd
+      loop: "{{ hydrate_out.results }}"
+      when:
+        - git_binary_check is defined
+        - git_binary_check.rc is defined
+        - git_binary_check.rc == 0
+        - git_binary_check.stdout is defined
+        - git_binary_check.stdout != ''
+        - hydrate_out.results is defined
+        - hydrate_out.results | length > 0
+      register: git_init_out
+
+    - name: '{{ ansible_name_module }} | Print  repositories init output'
+      debug:
+        var: git_init_out.results
+        verbosity: 2
+
+    - name: '{{ ansible_name_module }} | Print each repository init output'
+      debug:
+        var: item
+        verbosity: 2
+      loop: "{{ git_init_out.results }}"
+
+
