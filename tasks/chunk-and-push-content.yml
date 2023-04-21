@@ -1,0 +1,59 @@
+---
+- assert:
+    that:
+      - path_to_file_to_split is defined and path_to_file_to_split != ''
+    msg: "The path_to_file_to_split variable is required and must be a valid file path"
+
+- assert:
+    that:
+      - dest_path is defined and dest_path != ''
+    msg: "The dest_path variable is required and must be a valid file path"
+
+- name: '{{ ansible_name_module }} | set_fact |  bundle chunk size'
+  ansible.builtin.set_fact:
+    bundle_chunk_size: '5G'
+  when:
+    - not bundle_chunk_size is defined or bundle_chunk_size == ''
+
+- name: '{{ ansible_name_module }} |  local_action | Get {{ path_to_file_to_split }} checksum'
+  local_action:
+    module: ansible.builtin.command
+    cmd: sha256sum {{ path_to_file_to_split }}
+  register: original_checksum
+
+- debug: '{{ ansible_name_module }} | debug | print checksum output '
+    var: original_checksum.stdout | split('  ') | first
+
+- name: '{{ ansible_name_module }} | local_action | Split {{ path_to_file_to_split }} to multiple parts'
+  local_action:
+    module: ansible.builtin.command
+    cmd: split "{{ path_to_file_to_split }}" -b {{ bundle_chunk_size }} -d "{{ (path_to_file_to_split, 'part') | join('.') }}"
+
+- name: '{{ ansible_name_module }} | copy | Copy {{ path_to_file_to_split | basename }} to target'
+  ansible.builtin.copy:
+    dest: "{{ dest_path }}"
+    group: root
+    mode: 0644
+    owner: root
+    src: "{{ item }}"
+  loop: "{{ query('fileglob', (path_to_file_to_split, 'part*') | join('.')) | sort }}"
+
+- name: '{{ ansible_name_module }} | shell | Rebuild {{ (dest_path, path_to_file_to_split | basename) | path_join }}'
+  ansible.builtin.shell: >
+    cat {{ query('fileglob', (dest_path, path_to_file_to_split | basename, 'part*') | join('.')) | sort | join(' ') }} \
+     > {{ (dest_path, path_to_file_to_split | basename) | path_join }}
+
+- name: '{{ ansible_name_module }} | command | Get {{ (dest_path, path_to_file_to_split | basename) | path_join }} checksum'
+  ansible.builtin.command: >
+    sha256sum {{ (dest_path, path_to_file_to_split | basename) | path_join }}
+  register: transfer_checksum
+
+- assert:
+    that:
+      - (original_checksum.stdout | split('  ') | first) != (transfer_checksum.stdout | split('  ') | first)
+
+- name: '{{ ansible_name_module }} | file | Remove artifacts'
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop: "{{ query('fileglob', (dest_path, path_to_file_to_split | basename, 'part*') | join('.')) | sort | join(' ') }}"

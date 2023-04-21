@@ -1,0 +1,16 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+### The inventory file should define the destination_servers group 
+### This playbook is run from a controller and used to push a large file that is to be splitted into chunks to the destination servers
+- name: ' Push splitted large file to destination | split-and-push-large-file-to-destination.yml'
+  hosts: destination_servers 
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.6
+    module: "push-content-to-destination"
+    ansible_name_module: "Push content to destination | {{ module }}"
+
+  vars_files:
+
+  tasks:
+    - name: Push chunk to destination
+      ansible.builtin.include_tasks: tasks/chunk-and-push-content.yml
+
