@@ -1,0 +1,42 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- name: ' Push Content to registry using aws | push-content-to-s3-bucket.yml'
+  hosts: localhost
+  vars:
+    ansible_python_interpreter: /usr/bin/python3.6
+    module: "push-content-to-registry"
+    ansible_name_module: "Push content to S3 bucket | {{ module }}"
+
+  vars_files:
+    - 'vars/vault.yml'
+    - 'vars/registry.yml'
+  
+  pre_tasks:
+    - name: Ensure required aws binary is installed on host
+      when:
+        - not aws_cli is defined or aws_cli == ''
+      block:
+        - name: '{{ ansible_name_module }} | ansible.builtin.command:which | Check if aws is installed'
+          ansible.builtin.shell: >
+            which aws
+          ignore_errors: yes
+          register: aws_binary
+
+        - name: '{{ ansible_name_module }} | set_fact |  aws_cli'
+          ansible.builtin.set_fact:
+            aws_cli: "{{ aws_binary.stdout }}"
+          when:
+            - aws_binary is defined
+            - aws_binary.rc is defined
+            - aws_binary.rc == 0
+            - aws_binary.stdout is defined
+            - aws_binary.stdout != ''
+
+    - assert:
+        that:
+          - aws_cli is defined and aws_cli != "" 
+        msg: " the aws cli must be installed on the host to run this playbook "
+
+  tasks:
+    - name: Push chunk to S3
+      ansible.builtin.include_tasks: tasks/push-image-bundles-to-s3.yml
+

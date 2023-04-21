@@ -1,0 +1,101 @@
+---
+- name: Create S3 Bucket for artifacts
+  command: /usr/local/bin/aws s3api create-bucket --bucket "ocp4-image-bucket-{{ ansible_date_time.date }}"
+
+- name: '{{ ansible_name_module }} | set_fact |  bundle chunk size'
+  ansible.builtin.set_fact:
+    bundle_chunk_size: '9G'
+  when:
+    - not bundle_chunk_size is defined or bundle_chunk_size == ''
+
+- name: Handle image bundle to S3
+  when:
+    - split_ocp_images_bundle is defined
+    - split_ocp_images_bundle | bool
+    - push_ocp_images_bundle is defined
+    - push_ocp_images_bundle | bool
+  block:
+    - name: Split image bundle
+      command: split "{{ dir_bundle_location }}/{{ bundle_file_name }}" -b {{ bundle_chunk_size }}  -d "{{ dir_bundle_location }}/{{ bundle_file_name }}.part"
+
+    - name: Identify image bundle parts
+      find:
+        paths: "{{ dir_bundle_location }}"
+        patterns: '{{ bundle_file_name}}*part*'
+      register: image_bundle_parts
+
+    - name: Copy image bundle parts to S3
+      command: /usr/local/bin/aws s3 cp "{{ item.path }}" "s3://ocp4-image-bucket-{{ ansible_date_time.date }}/"
+      with_items: "{{ image_bundle_parts.files }}"
+
+    - name: Get checksum of original image file
+      stat:
+        path: "{{ dir_bundle_location }}/{{ bundle_file_name }}"
+        checksum_algorithm: md5
+      register: operator_md5
+
+    - name: Create template script for operator bundle re-assembly
+      template:
+        src: combine-operator-bundle.j2
+        dest: "{{ dir_bundle_location }}/combine-ocp-images.sh"
+        mode: 0755
+
+    - name: Copy combine-ocp-images.sh to bucket
+      command: /usr/local/bin/aws s3 cp "{{ dir_bundle_location }}/combine-ocp-images.sh" "s3://ocp4-image-bucket-{{ ansible_date_time.date }}/"
+
+- name: Copy OCP image bundle to S3
+  command: /usr/local/bin/aws s3 cp "{{ dir_bundle_location }}/{{ bundle_file_name }}" "s3://ocp4-image-bucket-{{ ansible_date_time.date }}/"
+  when:
+    - push_ocp_images_bundle is defined
+    - push_ocp_images_bundle | bool
+    - not split_ocp_images_bundle is defined or not split_ocp_images_bundle | bool
+
+- name: Handle operator bundle to S3
+  when:
+    - split_operators_bundle is defined
+    - split_operators_bundle | bool
+  block:
+    - name: Split operator bundle
+      command: split "{{ dir_bundle_location }}/{{ operator_bundle_file_name }}" -b {{ bundle_chunk_size }}  -d "{{ dir_bundle_location }}/{{ operator_bundle_file_name }}.part"
+
+    - name: Identify operator bundle parts
+      find:
+        paths: "{{ dir_bundle_location }}"
+        patterns: '*part*'
+      register: bundle_parts
+
+    - name: Copy operator bundle parts to S3
+      command: /usr/local/bin/aws s3 cp "{{ item.path }}" "s3://ocp4-image-bucket-{{ ansible_date_time.date }}/operators/"
+      loop: "{{ bundle_parts.files }}"
+
+    - name: Get checksum of original operator file
+      stat:
+        path: "{{ dir_bundle_location }}/{{ operator_bundle_file_name }}"
+        checksum_algorithm: md5
+      register: operator_md5
+
+    - name: Create template script for operator bundle re-assembly
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/templates/combine-operator-bundle.j2"
+        dest: "{{ dir_bundle_location }}/combine-operators.sh"
+        mode: 0755
+
+    - name: Copy combine-operators.sh to bucket
+      command: /usr/local/bin/aws s3 cp "{{ dir_bundle_location }}/combine-operators.sh" "s3://ocp4-image-bucket-{{ ansible_date_time.date }}/operators/"
+      register: bundle_parts_pushed
+
+    - name: '{{ ansible_name_module }} | file | remove operator bundle chunks'
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ bundle_parts.files }}"
+      when:
+        - bundle_parts_pushed is defined
+        - bundle_parts_pushed.rc is defined
+        - bundle_parts_pushed.rc == 0
+        - bundle_parts is defined
+        - bundle_parts.files is defined
+        - item.path is defined
+        - item.path != ''
+      register: bundle_parts_removed
+
