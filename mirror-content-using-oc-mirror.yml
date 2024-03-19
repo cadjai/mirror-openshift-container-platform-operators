@@ -47,6 +47,29 @@
           ansible.builtin.set_fact:
             imageset_config_files: "{{ created_imageset_config_files }}"
 
+    - name: '{{ ansible_name_module }} | Load imageset config files'
+      when:
+        - imageset_config_files_dir is defined
+        - imageset_config_files_dir != ''
+        - not imageset_config_files_to_create is defined or (imageset_config_files_to_create.keys() is defined and imageset_config_files_to_create.keys() | length == 0)
+      block:
+        - name: '{{ ansible_name_module }} | set |  all ISCP files path'
+          ansible.builtin.set_fact:
+            imageset_config_files_path: "{{ playbook_dir + '/' + imageset_config_files_dir }}"
+
+        - name: '{{ ansible_name_module }} | find |  Find all ISCP files'
+          ansible.builtin.find:
+            path: "{{ imageset_config_files_path }}"
+            recurse: no
+            patterns: '*-imageset-config.yml'
+          register: icfiles
+
+        - name: '{{ ansible_name_module }} | set_fact | ICSP file paths'
+          ansible.builtin.set_fact:
+            imageset_config_files: "{{ icfiles.files | map(attribute='path') | list }}"
+          when:
+            - icfiles is defined
+            - icfiles.files is defined
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content mirror within imageset  catalogs config files '
       ansible.builtin.include_tasks: tasks/process-content-mirror-using-oc-mirror.yml
       loop: "{{ imageset_config_files }}"
