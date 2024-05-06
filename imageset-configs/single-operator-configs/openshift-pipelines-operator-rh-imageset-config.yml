@@ -1,0 +1,13 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.12
+    targetName: openshift-pipelines-operator-rh
+    targetTag: v4.12
+    packages:
+    - name: openshift-pipelines-operator-rh
+      channels:
+      - name: "latest"
+      - name: "pipelines-1.14"
+

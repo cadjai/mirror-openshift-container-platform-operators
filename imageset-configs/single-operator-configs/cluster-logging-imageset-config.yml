@@ -1,0 +1,13 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.12
+    targetName: cluster-logging
+    targetTag: v4.12
+    packages:
+    - name: cluster-logging
+      channels:
+      - name: "stable-5.7"
+      - name: "stable-5.8"
+

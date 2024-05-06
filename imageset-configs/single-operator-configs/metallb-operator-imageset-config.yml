@@ -1,0 +1,12 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.12
+    targetName: metallb-operator 
+    targetTag: v4.12
+    packages:
+    - name: metallb-operator 
+      channels:
+      - name: "stable"
+

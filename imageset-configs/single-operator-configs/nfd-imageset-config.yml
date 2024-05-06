@@ -1,0 +1,12 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.12
+    targetName: nfd
+    targetTag: v4.12
+    packages:
+    - name: nfd
+      channels:
+      - name: "stable"
+

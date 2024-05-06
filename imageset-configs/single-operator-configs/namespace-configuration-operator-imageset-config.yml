@@ -1,0 +1,12 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/community-operator-index:v4.12
+    targetName: namespace-configuration-operator
+    targetTag: v4.12
+    packages:
+    - name: namespace-configuration-operator
+      channels:
+      - name: "alpha"
+

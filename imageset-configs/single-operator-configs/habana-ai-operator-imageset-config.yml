@@ -1,0 +1,12 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/certified-operator-index:v4.12
+    targetName: habana-ai-operator
+    targetTag: v4.12
+    packages:
+    - name: habana-ai-operator
+      channels:
+      - name: "stable"
+

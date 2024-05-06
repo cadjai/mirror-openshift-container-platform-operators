@@ -1,0 +1,15 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.12
+    targetName: kubevirt-hyperconverged 
+    targetTag: v4.12
+    packages:
+    - name: kubevirt-hyperconverged
+      channels:
+      - name: "stable"
+
+  additionalImages:
+    - name: registry.redhat.io/rhel8/rhel-guest-image:8.9.0-324
+    - name: registry.redhat.io/rhel9/rhel-guest-image:9.3-870

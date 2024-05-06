@@ -1,0 +1,12 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.12
+    targetName: local-storage-operator
+    targetTag: v4.12
+    packages:
+    - name: local-storage-operator
+      channels:
+      - name: "stable"
+

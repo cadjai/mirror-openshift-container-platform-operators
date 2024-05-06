@@ -1,0 +1,15 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+storageConfig:
+  local:
+    path: /claudedatavol/bundles/registry/
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/certified-operator-index:v4.12
+    targetName: gpu-operator-certified
+    targetTag: v4.12
+    packages:
+    - name: gpu-operator-certified
+      channels:
+      - name: "stable"
+      - name: "v23.9"

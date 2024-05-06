@@ -5,9 +5,6 @@ apiVersion: mirror.openshift.io/v1alpha2
 #    imageURL: localhost:5000/metadata:latest
 #    skipTLS: true
 mirror:
-  platform:
-    channels:
-    - name: stable-4.12
-      #maxVersion: 4.12.47
-      type: ocp
-    graph: true
+  additionalImages:
+    - name: registry.redhat.io/rhel8/rhel-guest-image:8.9.0-324
+    - name: registry.redhat.io/rhel9/rhel-guest-image:9.3-870

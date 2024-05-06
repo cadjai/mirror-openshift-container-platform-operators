@@ -1,0 +1,11 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  operators:
+  - catalog: registry.redhat.io/redhat/redhat-operator-index:v4.12
+    targetName: sandboxed-containers-operator
+    targetTag: v4.12
+    packages:
+    - name: sandboxed-containers-operator 
+      channels:
+      - name: "stable"
