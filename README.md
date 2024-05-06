@@ -230,6 +230,10 @@ When mirroring any content with an existing imageset config file you could use t
 
 ```
 
+### Extract OCP Tools for disconnected Install
+There are times when it is necessary to have the openshift-installer created for disconnected deployment. One of those instances is when using the agent installer in the fully disconnected environment where the cluster is deployed using a private registry. In such cases the openshift-installer downloaded [from](https://console.redhat.com/openshift/install/pull-secret) will have the public Red Hat registry [URL](quay.io) embedded in it, which cannot be resolved in the disconnected environment and cause `unable to read image quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:` error. 
+To avoid that it is necessary to extract the installer with the target registry embedded in it. 
+For security reasons the mirror-registry URL/FQDN might not be known in advance. In such cases itis recommended to use a mirror-registry as documented in the [Red Hat offical documentation](https://docs.openshift.com/container-platform/4.9/installing/installing-mirroring-installation-images.html) and use localhost for the FQDN and an approprite port so that localhost and the selected port can be used to extract the tools to be used fpr the deployment within the disconnected environment.  
 
 ## Requirements
 

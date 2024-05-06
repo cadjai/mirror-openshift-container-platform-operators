@@ -1,0 +1,90 @@
+#!/usr/local/bin/ansible-playbook --inventory=inventory
+- hosts: local,localhost
+  become: true
+  vars_files:
+  - vars/mirror-registry.yml
+  - vars/vault.yml
+  vars:
+    module: "extract installer and tools to use in disconnected environment"
+    ansible_name_module: " Pre Cluster Installation | {{ module }}"
+  pre_tasks:
+    - assert:
+        that:
+          - openshift_client_binary is defined and openshift_client_binary != ""
+        msg: "the openshift_client_binary must be defined and set to a valid path to the oc client"
+    - assert:
+        that:
+          - registry_pull_secret_file is defined and registry_pull_secret_file != ""
+        msg: "the registry_pull_secret_file must be defined and set to a valid path to the pullsecret file to use to fetch the tools from the private registry"
+    - assert:
+        that:
+          - icsp_file is defined and icsp_file != ""
+        msg: "the icsp_file must be defined and set to a valid path to the ICSP to use to fetch the payload from the private registry"
+    - name: '{{ ansible_name_module }} | ansible.builtin.command:which | Check if podman is installed'
+      block:
+        - name: '{{ ansible_name_module }} | ansible.builtin.command:which | Check if oc-mirror is installed'
+          ansible.builtin.shell: >
+            which podman
+          ignore_errors: yes
+          register: podman_binary
+
+        - name: '{{ ansible_name_module }} | set_fact |  podman_cli'
+          ansible.builtin.set_fact:
+            podman_cli: "{{ podman_binary.stdout }}"
+          when:
+            - podman_binary is defined
+            - podman_binary.rc is defined
+            - podman_binary.rc == 0
+            - podman_binary.stdout is defined
+            - podman_binary.stdout != ''
+
+  tasks:
+    ##############################################################################
+    ####### Extract OpenShift Clients for disconnected install
+    - name: '{{ ansible_name_module }} | shell:openshift-install | generate coreos image info'
+      block:
+        - name: '{{ ansible_name_module }} | file:directory | Ensure the tools staging directory exist'
+          become: yes
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            mode: 0777
+          loop:
+            - "{{ dir_bundle_location }}"
+            - "{{ dir_bundle_location }}/ocp-tools"
+
+        - name: Set default release image repository variable if necessary
+          ansible.builtin.set_fact:
+            release_image_repository: "openshift/release-images"
+          when:
+            - not release_image_repository is defined or release_image_repository == ''
+
+        - name: Set default release image tag variable if necessary
+          ansible.builtin.set_fact:
+            release_image_tag: "{{ ocp_release_images.stdout_lines[-1] | replace('\"', '') }}"
+          when:
+            - ocp_release_images is defined
+            - ocp_release_images.stdout_lines is defined
+            - ocp_release_images.stdout_lines | length > 0
+
+        - name: '{{ ansible_name_module }} | shell:oc:adm | Retrieve ocp tools from ocp payload'
+          ansible.builtin.shell: >
+            {{ openshift_client_binary }} adm release extract --tools {{ use_insecure_registry }} {{ icsp_file_opt }} \
+            -a {{ registry_pull_secret_file }} --from={{ registry_url }}/{{ local_repository }}/{{ release_image_repository }}:{{ release_image_tag }} \
+            --to={{ dir_bundle_location }}/ocp-tools
+          vars:
+            registry_url: "{{ (registry_host_fqdn + ':' + registry_host_port) if registry_host_port is defined and registry_host_port !='' else registry_host_fqdn }}"
+            use_insecure_registry: "{{ '--insecure=true' if is_insecure_registry is defined and is_insecure_registry | bool else '' }}"
+            icsp_file_opt: "{{ ('--icsp-file=' + icsp_file) if icsp_file is defined and icsp_file != '' else '' }}"
+          register: ocp_tools_extracted
+
+        - name: '{{ ansible_name_module }} | command: | Create ocp tool bundle'
+          become: yes
+          ansible.builtin.command: >
+            tar -c --use-compress-program='pigz -9' --remove-files -v \
+              -f {{ dir_bundle_location }}/ocp-tools.tar.gz \
+              -C {{ dir_bundle_location }}/ocp-tools .
+          args:
+            warn: false
+            chdir: "{{ dir_bundle_location }}/ocp-tools/"
+
