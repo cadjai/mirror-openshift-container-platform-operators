@@ -138,6 +138,9 @@
       ansible.builtin.set_fact:
         custom_catalog_names: "{{ custom_catalog_names | d([]) + [{'name': item, 'catalog': (lookup('file', item) | from_yaml).mirror.operators[0].targetName , 'tag': (lookup('file', item) | from_yaml).mirror.operators[0].targetTag }] }}"
       loop: "{{ imageset_config_files }}"
+      when:
+        - operator_content_type is defined
+        - operator_content_type | bool
 
     - name: '{{ ansible_name_module }} | Print custom tag data output'
       ansible.builtin.debug:
@@ -147,6 +150,7 @@
     - name: '{{ ansible_name_module }} | stat | Check if  bundle file exist'
       ansible.builtin.stat:
         path: "{{ dir_bundle_location }}/{{ (item  | basename).split('.')[0] }}.tar"
+        get_checksum: false
       loop: "{{ imageset_config_files }}"
       register: bundle_exist
 
@@ -159,6 +163,8 @@
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Process content push using imageset  catalogs config files'
       include_tasks: tasks/process-content-push-using-oc-mirror.yml
       loop: "{{ imageset_config_files }}"
+      loop_control:
+        index_var: key_cnt
       vars:
         imageset_config_file: "{{ item }}"
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
@@ -182,6 +188,8 @@
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Generate manifests from imageset catalogs config files '
       include_tasks: tasks/retrieve-manifests-from-oc-mirror-bundle.yml
       loop: "{{ imageset_config_files }}"
+      loop_control:
+        index_var: key_cnt
       vars:
         imageset_config_file: "{{ item }}"
         bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"

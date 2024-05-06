@@ -32,7 +32,14 @@
 
     - name: '{{ ansible_name_module }} | set_fact |  registry_content_repo_strg'
       ansible.builtin.set_fact:
-        registry_content_repo_strg: "{{ registry_host_fqdn }}{{ ('/' + content_repo)  if content_repo != '' else content_repo }}"
+        registry_host_url_strg: "{{ registry_host_fqdn }}{{ (':' + registry_host_port)  if registry_host_port is defined and registry_host_port != '' else registry_host_fqdn }}"
+      when:
+        - registry_host_fqdn is defined
+        - registry_host_fqdn != ''
+
+    - name: '{{ ansible_name_module }} | set_fact |  registry_content_repo_strg'
+      ansible.builtin.set_fact:
+        registry_content_repo_strg: "{{ registry_host_url_strg }}{{ ('/' + content_repo) if content_repo != '' else content_repo }}"
       when:
         - registry_host_fqdn is defined
         - registry_host_fqdn != ''

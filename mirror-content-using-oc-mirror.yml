@@ -33,7 +33,7 @@
             - ocmirror_binary.stdout != ''
 
   tasks:
-    - name: '{{ ansible_name_module }} | COnditionally create imageset config files'
+    - name: '{{ ansible_name_module }} | Conditionally create imageset config files'
       when:
         - imageset_config_files_to_create is defined
         - imageset_config_files_to_create is mapping
@@ -52,6 +52,7 @@
         - imageset_config_files_dir is defined
         - imageset_config_files_dir != ''
         - not imageset_config_files_to_create is defined or (imageset_config_files_to_create.keys() is defined and imageset_config_files_to_create.keys() | length == 0)
+        - operator_content_type is defined and operator_content_type | bool
       block:
         - name: '{{ ansible_name_module }} | set |  all ISCP files path'
           ansible.builtin.set_fact:
@@ -70,6 +71,7 @@
           when:
             - icfiles is defined
             - icfiles.files is defined
+
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content mirror within imageset  catalogs config files '
       ansible.builtin.include_tasks: tasks/process-content-mirror-using-oc-mirror.yml
       loop: "{{ imageset_config_files }}"
@@ -82,19 +84,18 @@
       ansible.builtin.debug:
         var: all_content_mirrored.results
         verbosity: 2
-
     - name: '{{ ansible_name_module }} | block | create bundle of single operator bundles'
-      when:
-        - bundle is defined
-        - bundle | bool
-        - imageset_config_files | length > 1
-      block:
-        - name: '{{ ansible_name_module }} | archive:xz | create operator image bundle '
-          become: yes
-          command: >
-            tar -c --use-compress-program='pigz -9' --remove-files -v \
-              -f {{ dir_bundle_location }}/{{ operator_bundle_file_name }} \
-              -C {{ dir_bundle_location }}/bundle .
-          args:
-            warn: false
-            chdir: "{{ dir_bundle_location }}/bundle/"
+       when:
+         - bundle is defined
+         - bundle | bool
+         - imageset_config_files | length > 1
+       block:
+         - name: '{{ ansible_name_module }} | archive:xz | create operator image bundle '
+           become: yes
+           command: >
+             tar -c --use-compress-program='pigz -9' --remove-files -v \
+               -f {{ dir_bundle_location }}/{{ operator_bundle_file_name }} \
+               -C {{ dir_bundle_location }}/bundle .
+           args:
+             warn: false
+             chdir: "{{ dir_bundle_location }}/bundle/"
