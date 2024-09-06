@@ -54,6 +54,7 @@
         {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }} -v5
       when:
         -  "not 'localhost' in registry_host_fqdn"
+      failed_when: "images_pushed.rc > 0 and not 'unable to copy layer' in images_pushed.stderr"
       register: images_pushed
 
     - name:  '{{ ansible_name_module }} | Push containers to registry'
@@ -61,6 +62,7 @@
         {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }}  --dest-skip-tls --dest-use-http  -v5
       when:
         -  "'localhost' in registry_host_fqdn"
+      failed_when: "images_pushed.rc > 0 and not 'unable to copy layer' in images_pushed.stderr"
       register: images_pushed
 
 
@@ -72,6 +74,7 @@
     - name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
       ansible.builtin.command: >
         {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://localhost:5000 --dest-skip-tls --dest-use-http -v5
+      failed_when: "images_pushed.rc > 0 and not 'unable to copy layer' in images_pushed.stderr"
       register: images_pushed
 
     - name: '{{ ansible_name_module }} | set_fact |  manifest_result_folder'
@@ -101,6 +104,7 @@
            docker://{{ registry_host_fqdn }}/{{ operator_local_repository }}/{{ ((item.split('=')[0]).split('/')[1:]  | join('/')).split('@sha256')[0] }} \
            --src-tls-verify=false --preserve-digests=true
       loop: "{{ lookup('file', image_mapping_file).splitlines() }}"
+      failed_when: "operators_uploaded.rc > 0 and not 'unable to copy layer' in operators_uploaded.stderr"
       register: operators_uploaded
 
     - name: Set custom index image destination repo prefix
@@ -129,6 +133,7 @@
            docker://{{ item.dest }} \
            --src-tls-verify=false --preserve-digests=true
       loop: "{{ catalog_index_data }}"
+      failed_when: "operators_indices_uploaded.rc > 0 and not 'unable to copy layer' in operators_indices_uploaded.stderr"
       register: operators_indices_uploaded
 
     - name: '{{ ansible_name_module }} | podman:run | Stop registry container '
