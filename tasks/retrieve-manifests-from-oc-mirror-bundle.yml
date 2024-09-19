@@ -128,6 +128,7 @@
     - name: '{{ ansible_name_module }} | set_fact | signature file paths'
       ansible.builtin.set_fact:
         signature_files: "{{ release_signatures_files.files | map(attribute='path') | flatten }}"
+      ignore_errors: 'true'
       when:
         - release_signatures_files is defined
         - release_signatures_files.files is defined
@@ -139,6 +140,9 @@
         dest: "{{ playbook_dir }}/image-signatures/{{ item | basename }}"
         force: yes
       loop: "{{ signature_files }}"
+      when:
+        - signature_files is defined
+        - signature_files | length > 0 
       register: signature_files_copied
 
     - name: '{{ ansible_name_module }} | file:directory | Ensure the extracted release-signatures directory does not exist'
