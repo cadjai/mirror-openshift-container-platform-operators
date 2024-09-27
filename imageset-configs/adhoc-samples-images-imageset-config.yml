@@ -1,0 +1,25 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  additionalImages:
+    - name: quay.io/openshift/origin-cli:4.18
+    - name: quay.io/openshift/origin-cli-artifacts:4.18 
+    - name: quay.io/openshift/origin-cluster-samples-operator:latest
+    - name: quay.io/openshift/origin-baremetal-installer:4.18
+    - name: quay.io/openshift/origin-installer:4.18
+    - name: quay.io/openshift/origin-installer-artifacts:4.18
+    - name: quay.io/openshift/origin-tests:4.18
+    - name: quay.io/openshift/origin-tools:4.18
+    - name: quay.io/openshift/origin-must-gather:4.18
+    - name: quay.io/openshift/origin-oauth-proxy-samples:4.4
+    - name: quay.io/openshift/origin-network-tools:latest
+    - name: quay.io/openshift/origin-cli:4.14
+    - name: quay.io/openshift/origin-cli-artifacts:4.14 
+    - name: quay.io/openshift/origin-cluster-samples-operator:latest
+    - name: quay.io/openshift/origin-baremetal-installer:4.14
+    - name: quay.io/openshift/origin-installer:4.14
+    - name: quay.io/openshift/origin-installer-artifacts:4.14
+    - name: quay.io/openshift/origin-tests:4.14
+    - name: quay.io/openshift/origin-tools:4.14
+    - name: quay.io/openshift/origin-must-gather:4.14
+    - name: quay.io/openshift/origin-network-tools:latest
