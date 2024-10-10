@@ -1,0 +1,10 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  additionalImages:
+    - name: quay.io/opendatahub/workbench-images@sha256:9b4bbffaba1f04ece7bae5b72e2ca014264c241e8478b97ef12631b0cfc102dd
+    - name: quay.io/opendatahub/workbench-images@sha256:578e15d710150990dc3abd8d8a7b68f2017298220faa98c9fa261e8761319545
+    - name: quay.io/opendatahub/workbench-images:intel-runtime-tensorflow-ubi9-python-3.9-c37956c
+    - name: quay.io/opendatahub/workbench-images:intel-runtime-ml-ubi9-python-3.11-pr-719
+    - name: quay.io/opendatahub/workbench-images:jupyter-intel-ml-ubi9-python-3.11-20240927-c37956c
+
