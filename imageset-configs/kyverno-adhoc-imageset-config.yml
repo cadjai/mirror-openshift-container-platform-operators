@@ -1,0 +1,33 @@
+kind: ImageSetConfiguration
+apiVersion: mirror.openshift.io/v1alpha2
+mirror:
+  helm:
+   repositories:
+     - name: kyverno
+       url:  https://nirmata.github.io/kyverno-charts/
+       charts:
+         - name: kyverno
+           version: 3.2.4
+     - name: nirmata-kyverno-operator
+       url:  https://nirmata.github.io/kyverno-charts/
+       charts:
+         - name: nirmata-kyverno-operator
+           version: v0.4.19
+  additionalImages:
+          - name: ghcr.io/nirmata/kyverno@sha256:3b7bdd7ad2aeddb9b5ab323bb166863cb00c0977c9eede200808b5832c4a2069
+          - name: ghcr.io/nirmata/kyverno:v1.8.1-n4kbuild.1
+          - name: ghcr.io/nirmata/kyverno:v1.12.5-n4k.nirmata.5
+          - name: ghcr.io/nirmata/nirmata-kyverno-operator:v0.3.15
+          - name: ghcr.io/nirmata/enterprise-kyverno:v0.0.2
+          - name: ghcr.io/nirmata/enterprise-kyverno-operator:v0.1.19-test-pns
+          - name: ghcr.io/nirmata/kyvernopre:v1.8.1-n4kbuild.1
+          - name: ghcr.io/nirmata/kyvernopre:v1.10.7-n4k.nirmata.17-rc1
+          - name: ghcr.io/nirmata/kyverno-cli:v1.10.7-n4k.nirmata.17-rc1
+          - name: ghcr.io/nirmata/kyverno-monitor:0.1.0
+          - name: ghcr.io/nirmata/nirmata-kyverno-monitor:0.1.0
+          - name: ghcr.io/nirmata/nirmata-kyverno-monitor:0.1.4
+          - name: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
+          - name: ghcr.io/nirmata/kube-rbac-proxy:v0.13.1
+          - name: ghcr.io/nirmata/busybox:latest
+          - name: docker.io/bitnami/kubectl:latest
+          - name: docker.io/busybox:latest
