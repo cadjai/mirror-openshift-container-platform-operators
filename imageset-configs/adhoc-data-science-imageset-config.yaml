@@ -1,5 +1,5 @@
 kind: ImageSetConfiguration
-apiVersion: mirror.openshift.io/v1alpha2
+apiVersion: mirror.openshift.io/v2alpha1
 mirror:
   additionalImages:
     - name: quay.io/opendatahub/workbench-images@sha256:9b4bbffaba1f04ece7bae5b72e2ca014264c241e8478b97ef12631b0cfc102dd
