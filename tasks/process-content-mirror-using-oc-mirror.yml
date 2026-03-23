@@ -37,7 +37,7 @@
 
 - name: '{{ ansible_name_module }} | Mirror content using the oc-mirror plugin'
   ansible.builtin.command: >
-    {{ oc_mirror_cli }} --config {{ imageset_config_file }} file://{{ dir_bundle_location }}/{{ manifest_prefix }} -v5
+    {{ oc_mirror_cli }} --v2 --authfile {{ registry_auth_config }} --config {{ imageset_config_file }} file://{{ dir_bundle_location }}/{{ manifest_prefix }} --log-level debug
   register: content_mirrored
 
 - name: '{{ ansible_name_module }} | Rename bundle so it is related to the imageset config file'
