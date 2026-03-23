@@ -2,12 +2,12 @@
 - name: 'Mirror content using oc-mirror | mirror-operators.yml'
   hosts: localhost
   vars:
-    ansible_python_interpreter: /usr/bin/python3.6
+    ansible_python_interpreter: /usr/bin/python3
     module: "content-mirror"
     ansible_name_module: " Miror Content using oc-mirror | {{ module }}"
 
   vars_files:
-    - 'vars/vault.yml'
+    #- 'vars/vault.yml'
     - 'vars/registry.yml'
     - 'vars/content-mirror.yml'
   
@@ -72,11 +72,87 @@
             - icfiles is defined
             - icfiles.files is defined
 
+    - name: '{{ ansible_name_module }} | ansible.builtin.set_fact | oc_mirror_workspace_dir '
+      ansible.builtin.set_fact:
+        oc_mirror_workspace_dir: "{{ playbook_dir }}/oc-mirror-workspace"
+
+    - name: '{{ ansible_name_module }} | set registry authfile if not provided '
+      when:
+        - not registry_authfile is defined or registry_authfile == ''
+      block:
+        - name: '{{ ansible_name_module }} | ansible.builtin.set_fact | local_user '
+          ansible.builtin.set_fact:
+            local_user: "{{ lookup('env', 'USER') }}"
+
+        - name: '{{ ansible_name_module }} | stat | Check if registry auth file exist'
+          ansible.builtin.stat:
+            path: "{{ local_user }}/.docker/config.json"
+            get_checksum: false
+          register: authfile_exist
+
+        - name: '{{ ansible_name_module }} | set_fact |  authfile for registry'
+          ansible.builtin.set_fact:
+            registry_auth_config: "{{ local_user }}/.docker/config.json"
+          when:
+            - authfile_exist.stat is defined
+            - authfile_exist.stat.exists is defined
+            - authfile_exist.stat.exists | bool
+            - authfile_exist.stat.path is defined
+            - authfile_exist.stat.path != '' 
+
+        - name: '{{ ansible_name_module }} | ansible.builtin.set_fact | xdg_container_dir '
+          ansible.builtin.set_fact:
+            xdg_container_dir: "$XDG_RUNTIME_DIR/containers"
+          when:
+            - not registry_auth_config is defined or registry_auth_config == ''
+
+        - name: '{{ ansible_name_module }} | stat | Check if registry auth file exist'
+          ansible.builtin.stat:
+            path: "{{ xdg_container_dir }}/auth.json"
+            get_checksum: false
+          when:
+            - not registry_auth_config is defined or registry_auth_config == ''
+          register: authfile_exist
+
+        - name: '{{ ansible_name_module }} | set_fact |  authfile for registry'
+          ansible.builtin.set_fact:
+            registry_auth_config: "{{ xdg_container_dir }}/auth.json"
+          when:
+            - not registry_auth_config is defined or registry_auth_config == ''
+            - authfile_exist.stat is defined
+            - authfile_exist.stat.exists is defined
+            - authfile_exist.stat.exists | bool
+            - authfile_exist.stat.path is defined
+            - authfile_exist.stat.path != '' 
+
+    - name: '{{ ansible_name_module }} | ansible.builtin.assert | ensure authfile for registry is defined'
+      ansible.builtin.assert:
+        that:
+          - registry_auth_config is defined and registry_auth_config != ""
+        msg: "the registry_auth_config must be defined and set to a valid path to the pull secret"
+
+          #podman login -u {{ registry_admin_username }} -p {{ registry_admin_password }} \
+    #- name: '{{ ansible_name_module }} | command | generate authfile for registry'
+    #  #no_log: true
+    #  ansible.builtin.command: >
+    #    podman login  \
+    #       --authfile {{ registry_auth_config }} \
+    #       {{ registry_host_fqdn }}
+    #  when:
+    #    - "not 'localhost' in registry_host_fqdn"
+    #  register: reg_authfile_created
+
+    - name: '{{ ansible_name_module }} | file:directory | Ensure the images staging directory exist'
+      ansible.builtin.file:
+        path: "{{ oc_mirror_workspace_dir }}"
+        state: directory
+        mode: 0777
+
     - name: '{{ ansible_name_module }} | ansible.builtin.shell | Prcess content mirror within imageset  catalogs config files '
       ansible.builtin.include_tasks: tasks/process-content-mirror-using-oc-mirror.yml
       loop: "{{ imageset_config_files }}"
       vars:
-        imageset_config_file: "{{ item }}"
+        imageset_config_file: "{{ playbook_dir }}/{{ item }}"
         is_bundle_part: "{{ 'true' if imageset_config_files | length > 1 else 'false' }}"
       register: all_content_mirrored
 
@@ -85,17 +161,17 @@
         var: all_content_mirrored.results
         verbosity: 2
     - name: '{{ ansible_name_module }} | block | create bundle of single operator bundles'
-       when:
-         - bundle is defined
-         - bundle | bool
-         - imageset_config_files | length > 1
-       block:
-         - name: '{{ ansible_name_module }} | archive:xz | create operator image bundle '
-           become: yes
-           command: >
-             tar -c --use-compress-program='pigz -9' --remove-files -v \
-               -f {{ dir_bundle_location }}/{{ operator_bundle_file_name }} \
-               -C {{ dir_bundle_location }}/bundle .
-           args:
-             warn: false
-             chdir: "{{ dir_bundle_location }}/bundle/"
+      when:
+        - bundle is defined
+        - bundle | bool
+        - imageset_config_files | length > 1
+      block:
+        - name: '{{ ansible_name_module }} | archive:xz | create operator image bundle '
+          become: yes
+          command: >
+            tar -c --use-compress-program='pigz -9' --remove-files -v \
+              -f {{ dir_bundle_location }}/{{ operator_bundle_file_name }} \
+              -C {{ dir_bundle_location }}/bundle .
+          args:
+            warn: false
+            chdir: "{{ dir_bundle_location }}/bundle/"
