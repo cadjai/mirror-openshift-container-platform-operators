@@ -307,22 +307,22 @@ The dictionary containing list of operators to mirror .
 
 	imageset_config_files_to_create:
           advanced-cluster-management:
-            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
             channel: 'release-2.7'
             min_version: ''
             max_version: ''
           amq-streams:
-            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
             channel: 'stable'
             min_version: ''
             max_version: ''
           businessautomation-operator:
-            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
             channel: 'stable'
             min_version: ''
             max_version: ''
           cincinnati-operator:
-            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.10'  
+            src_index: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'  
             channel: 'stable'
             min_version: ''
             max_version: ''

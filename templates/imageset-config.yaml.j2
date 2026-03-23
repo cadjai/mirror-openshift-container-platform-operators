@@ -2,7 +2,7 @@ kind: ImageSetConfiguration
 apiVersion: mirror.openshift.io/v2alpha1
 mirror:
   operators:
-  - catalog: {{ cat_src_index | default('registry.redhat.io/redhat/redhat-operator-index:v4.10', true) }}
+  - catalog: {{ cat_src_index | default('registry.redhat.io/redhat/redhat-operator-index:v4.20', true) }}
 {% if cat_target_name is defined and cat_target_name != '' %}
     targetCatalog: {{ cat_target_name }}
 {% endif %}
