@@ -71,7 +71,6 @@
       failed_when: "images_pushed.rc > 0 and not 'unable to copy layer' in images_pushed.stderr"
       register: images_pushed
 
-
 - name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
   when:
     - use_manifest_file is defined
@@ -149,3 +148,10 @@
         - operators_indices_uploaded is defined
         - operators_indices_uploaded.changed is defined
         - operators_indices_uploaded.changed | bool
+
+- name: '{{ ansible_name_module }} | ansible.builtin.shell | Process content push manifests files'
+  include_tasks: tasks/process-ocmv2-content-push-manifests.yml
+  vars:
+    raw_manifests_dir: "{{ dir_bundle_location }}/working-dir/"
+    manifest_sub_dir: "{{ imageset_config_file | basename }}
+
