@@ -90,19 +90,6 @@
         disable_reg_tls_strg: "{{ '--tls-verify=false' if disable_registry_tls is defined and disable_registry_tls | bool else '' }}"
       register: reg_authfile_created
 
-    #- name: '{{ ansible_name_module }} | command | generate authfile for registry'
-    #  #no_log: true
-    #  ansible.builtin.command: >
-    #    podman login -u {{ registry_admin_username }} -p {{ registry_admin_password }} \
-    #       --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json \
-    #       {{ disable_reg_tls_strg }} {{ registry_host_fqdn }}{{ reg_port_strg }}
-    #  when:
-    #    - "'localhost' in registry_host_fqdn"
-    #  vars:
-    #    reg_port_strg: "{{ (':' + registry_host_port) if registry_host_port is defined and registry_host_port != '' else '' }}"
-    #    disable_reg_tls_strg: "{{ '--tls-verify=false' if disable_registry_tls is defined and disable_registry_tls | bool else '' }}"
-    #  register: reg_authfile_created
-
     - name: '{{ ansible_name_module }} | set imageset config files variable if not set'
       when:
         - not imageset_config_files is defined or (imageset_config_files is defined and not imageset_config_files is mapping and imageset_config_files | type_debug == "list" and imageset_config_files | length == 0)
