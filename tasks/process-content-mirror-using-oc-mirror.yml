@@ -42,14 +42,14 @@
 
 - name: '{{ ansible_name_module }} | Rename bundle so it is related to the imageset config file'
   ansible.builtin.shell: >
-    mv {{ dir_bundle_location }}/{{ manifest_prefix }}/mirror_seq1_000000.tar {{ dir_bundle_location }}/bundle/{{ manifest_prefix }}.tar
+    mv {{ dir_bundle_location }}/{{ manifest_prefix }}/mirror_000001.tar {{ dir_bundle_location }}/bundle/{{ manifest_prefix }}.tar
   when:
     - is_bundle_part is defined
     - is_bundle_part | bool
 
 - name: '{{ ansible_name_module }} | Rename bundle so it is related to the imageset config file'
   ansible.builtin.shell: >
-    mv {{ dir_bundle_location }}/{{ manifest_prefix }}/mirror_seq1_000000.tar {{ dir_bundle_location }}/{{ manifest_prefix }}.tar
+    mv {{ dir_bundle_location }}/{{ manifest_prefix }}/mirror_000001.tar {{ dir_bundle_location }}/{{ manifest_prefix }}.tar
   when:
     - not is_bundle_part is defined or not is_bundle_part | bool
 
