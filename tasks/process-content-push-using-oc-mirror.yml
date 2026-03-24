@@ -1,4 +1,10 @@
 ---
+- name: '{{ ansible_name_module }} | Rename bundle back to default name expected by oc-mirror v2'
+  ansible.builtin.shell: >
+    mv {{ dir_bundle_location }}/{{ bundle_name }} {{ dir_bundle_location }}/mirror_000001.tar 
+  when:
+    - "not 'mirror_000001.tar' in bundle_name"
+
 - name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
   when:
     - (use_manifest_file is defined and use_manifest_file | bool) or  (registry_host_fqdn is defined and "'localhost' in registry_host_fqdn")
@@ -51,7 +57,7 @@
 
     - name:  '{{ ansible_name_module }} | Push containers to registry'
       ansible.builtin.command: >
-        {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }} -v5
+        {{ oc_mirror_cli }} --v2 --config {{ imageset_config_file }} --from file://{{ dir_bundle_location }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }} --log-level debug
       when:
         -  "not 'localhost' in registry_host_fqdn"
       failed_when: "images_pushed.rc > 0 and not 'unable to copy layer' in images_pushed.stderr"
@@ -59,7 +65,7 @@
 
     - name:  '{{ ansible_name_module }} | Push containers to registry'
       ansible.builtin.command: >
-        {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://{{  registry_content_repo_strg | default('localhost:5000', true) }}  --dest-skip-tls --dest-use-http  -v5
+        {{ oc_mirror_cli }} --v2 --config {{ imageset_config_file }} --from file://{{ dir_bundle_location }} docker://{{  registry_content_repo_strg | default('localhost:5000', true) }} --dest-tls-verify=false   --log-level debug
       when:
         -  "'localhost' in registry_host_fqdn"
       failed_when: "images_pushed.rc > 0 and not 'unable to copy layer' in images_pushed.stderr"
@@ -73,7 +79,7 @@
   block:
     - name:  '{{ ansible_name_module }} | Push container to temp container registry to be used as placeholder for later processing'
       ansible.builtin.command: >
-        {{ oc_mirror_cli }} --from {{ dir_bundle_location }}/{{ bundle_name | d('mirror_seq1_000000.tar', true) }}  docker://localhost:5000 --dest-skip-tls --dest-use-http -v5
+        {{ oc_mirror_cli }} --v2 --config {{ imageset_config_file }} --from file://{{ dir_bundle_location }}/  docker://localhost:5000 --dest-tls-verify=false  --log-level debug
       failed_when: "images_pushed.rc > 0 and not 'unable to copy layer' in images_pushed.stderr"
       register: images_pushed
 
