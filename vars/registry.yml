@@ -29,261 +29,261 @@ generate_operator_list: 'false'
 mirrored_index_prefix: 'custom-'
 operators_to_mirror:
   3scale-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   advanced-cluster-management:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   amq-streams:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   businessautomation-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   cincinnati-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   cluster-kube-descheduler-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   cluster-logging:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   clusterresourceoverride:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   codeready-workspaces:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   compliance-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   container-security-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   costmanagement-metrics-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   elasticsearch-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   file-integrity-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   jaeger-product:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   kiali-ossm:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   local-storage-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   nfd:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   ocs-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   performance-addon-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   ptp-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   rhacs-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   rhsso-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   serverless-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   servicemeshoperator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   web-terminal:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   mtc-operator:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   group-sync-operator:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   keycloak-operator:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   namespace-configuration-operator:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   argocd-operator:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   argocd-operator-helm:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   prometheus:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   prometheus-exporter-operator:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   jupyterlab-operator:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   anchore-engine:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   elasticsearch-eck-operator-certified:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   falco-certified:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   gitlab-runner-operator:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   gpu-operator-certified:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   nginx-ingress-operator:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   openshiftartifactoryha-operator:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   openshiftpipeline-operator:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "true"
     upgrade: "false"
   openshiftxray-operator:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   prisma-cloud-compute-console-operator.v2.0.1:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   redhat-marketplace-operator:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   rocketchat-operator-certified:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
   sysdig-certified:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     start_version: ''
     mirror: "false"
     upgrade: "false"
 
 operator_registries_to_mirror:
   redhat-operators:
-    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-operator-index:v4.20'
     container_port: '50051'
     host_port: 50051
   community-operators:
-    source: 'registry.redhat.io/redhat/community-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/community-operator-index:v4.20'
     container_port: 50051
     host_port: 40051
   market-operators:
-    source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.7'
+    source: 'registry.redhat.io/redhat/redhat-marketplace-index:v4.20'
     container_port: 50051
     host_port: 30051
   certified-operators:
-    source: 'registry.redhat.io/redhat/certified-operator-index:v4.7'
+    source: 'registry.redhat.io/redhat/certified-operator-index:v4.20'
     container_port: 50051
     host_port: 20051
 
