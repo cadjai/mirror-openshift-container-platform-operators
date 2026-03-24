@@ -2,7 +2,7 @@
 - name: ' Push Content to registry using oc-mirror | push-content-using-oc-mirror.yml'
   hosts: localhost
   vars:
-    ansible_python_interpreter: /usr/bin/python3.6
+    ansible_python_interpreter: /usr/bin/python3
     module: "push-content-to-registry"
     ansible_name_module: "Push content to registry | {{ module }}"
 
@@ -82,10 +82,26 @@
       ansible.builtin.command: >
         podman login -u {{ registry_admin_username }} -p {{ registry_admin_password }} \
            --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json \
-           {{ registry_host_fqdn }}
+           {{ disable_reg_tls_strg }} {{ registry_host_fqdn }}{{ reg_port_strg }} 
       when:
         - "not 'localhost' in registry_host_fqdn"
+      vars:
+        reg_port_strg: "{{ (':' + registry_host_port) if registry_host_port is defined and registry_host_port != '' else '' }}"
+        disable_reg_tls_strg: "{{ '--tls-verify=false' if disable_registry_tls is defined and disable_registry_tls | bool else '' }}"
       register: reg_authfile_created
+
+    #- name: '{{ ansible_name_module }} | command | generate authfile for registry'
+    #  #no_log: true
+    #  ansible.builtin.command: >
+    #    podman login -u {{ registry_admin_username }} -p {{ registry_admin_password }} \
+    #       --authfile {{ hostvars[inventory_hostname].ansible_env.HOME }}/.docker/config.json \
+    #       {{ disable_reg_tls_strg }} {{ registry_host_fqdn }}{{ reg_port_strg }}
+    #  when:
+    #    - "'localhost' in registry_host_fqdn"
+    #  vars:
+    #    reg_port_strg: "{{ (':' + registry_host_port) if registry_host_port is defined and registry_host_port != '' else '' }}"
+    #    disable_reg_tls_strg: "{{ '--tls-verify=false' if disable_registry_tls is defined and disable_registry_tls | bool else '' }}"
+    #  register: reg_authfile_created
 
     - name: '{{ ansible_name_module }} | set imageset config files variable if not set'
       when:
@@ -136,7 +152,7 @@
 
     - name: '{{ ansible_name_module }} | set_fact | custom catalog'
       ansible.builtin.set_fact:
-        custom_catalog_names: "{{ custom_catalog_names | d([]) + [{'name': item, 'catalog': (lookup('file', item) | from_yaml).mirror.operators[0].targetName , 'tag': (lookup('file', item) | from_yaml).mirror.operators[0].targetTag }] }}"
+        custom_catalog_names: "{{ custom_catalog_names | d([]) + [{'name': item, 'catalog': (lookup('file', item) | from_yaml).mirror.operators[0].targetCatalog , 'tag': (lookup('file', item) | from_yaml).mirror.operators[0].targetTag }] }}"
       loop: "{{ imageset_config_files }}"
       when:
         - operator_content_type is defined
@@ -149,9 +165,11 @@
 
     - name: '{{ ansible_name_module }} | stat | Check if  bundle file exist'
       ansible.builtin.stat:
-        path: "{{ dir_bundle_location }}/{{ (item  | basename).split('.')[0] }}.tar"
+        path: "{{ dir_bundle_location }}/{{ (bundle_name | basename).split('.')[0] }}.tar"
         get_checksum: false
       loop: "{{ imageset_config_files }}"
+      vars:
+        bundle_name: "{{ item if not overwrite_with_default or not overwrite_with_default | bool else 'mirror_000001.tar' }}"
       register: bundle_exist
 
     - name: '{{ ansible_name_module }} | Print bundle exist check output'
@@ -167,7 +185,8 @@
         index_var: key_cnt
       vars:
         imageset_config_file: "{{ item }}"
-        bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+          #bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+        bundle_name: "{{ ((item if not overwrite_with_default or not overwrite_with_default | bool else 'mirror_000001.tar') | basename).split('.')[0] }}.tar"
         catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
         catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
         manifests_dir: "{{ playbook_dir }}/manifests/{{ (item | basename).split('-imageset')[0] }}-index-manifests"
@@ -192,7 +211,8 @@
         index_var: key_cnt
       vars:
         imageset_config_file: "{{ item }}"
-        bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+          #bundle_name: "{{ (item  | basename).split('.')[0] }}.tar"
+        bundle_name: "{{ ((item if not overwrite_with_default or not overwrite_with_default | bool else 'mirror_000001.tar') | basename).split('.')[0] }}.tar"
         catalog_index_name: "{{ custom_catalog_names[key_cnt].catalog if custom_catalog_names[key_cnt].catalog is defined and custom_catalog_names[key_cnt].catalog != '' else ('custom-' + item.split('-imageset')[0]) if use_manifest_file is defined and use_manifest_file | bool else '' }}"
         catalog_index_tag: "{{ custom_catalog_names[key_cnt].tag if custom_catalog_names[key_cnt].tag is defined and custom_catalog_names[key_cnt].catalog != '' else '' }}"
         manifests_dir: "{{ playbook_dir }}/manifests/{{ (item | basename).split('-imageset')[0] }}-index-manifests"
